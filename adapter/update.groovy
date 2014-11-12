@@ -37,7 +37,13 @@ if ( ! config.maxtimestamp ) {
 OaiClient oaiclient = new OaiClient(host:'https://gokb.k-int.com/gokb/oai/orgs');
 println("Starting...");
 
-oaiclient.getChangesSince(null, 'gokb') { org ->
+oaiclient.getChangesSince(null, 'gokb') { record ->
+  println("Org... ${record}");
+  println("       ${record.metadata.gokb.org.@id}");
+  println("       ${record.metadata.gokb.org.name.text()}");
+  record.metadata.gokb.org.identifiers.identifier.each {
+    println(it)
+  }
 }
 
 println("Done.");

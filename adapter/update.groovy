@@ -54,15 +54,67 @@ if ( ! config.maxtimestamp ) {
 }
 
 OaiClient oaiclient = new OaiClient(host:'https://gokb.k-int.com/gokb/oai/orgs');
+// OaiClient oaiclient = new OaiClient(host:'https://gokb.kuali.org/gokb/oai/orgs');
 println("Starting...");
 
-oaiclient.getChangesSince(null, 'gokb') { record ->
-  println("Org... ${record.header.identifier}");
-  println("       ${record.metadata.gokb.org.@id}");
-  println("       ${record.metadata.gokb.org.name.text()}");
-  record.metadata.gokb.org.identifiers.identifier.each {
-    println(it)
+try {
+  
+  def graph = new VirtGraph('uri://gokb.org/', config.store_uri, "dba", "dba");
+  
+  Node foaf_org_type = Node.createURI('http://xmlns.com/foaf/0.1/Organization');
+  Node foaf_agent_type = Node.createURI('http://xmlns.com/foaf/0.1/Agent');
+  Node schema_org_organisation_type = Node.createURI('http://schema.org/Organisation');
+  Node bibframe_organisation_type = Node.createURI('http://bibframe.org/vocab-list/#Organisation');
+  Node owl_organisation_type = Node.createURI('http://www.w3.org/2002/07/owl#Organisation');
+  Node owl_thing_type = Node.createURI('http://www.w3.org/2002/07/owl#Thing');
+  
+  Node type_pred = Node.createURI('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+  Node skos_pref_label_pred = Node.createURI('http://www.w3.org/2004/02/skos/core#prefLabel');
+  Node skos_alt_label_pred = Node.createURI('http://www.w3.org/2004/02/skos/core#altLabel');
+  Node owl_same_as_pred = Node.createURI('http://www.w3.org/2002/07/owl#sameAs');
+  Node foaf_homepage_pred = Node.createURI('http://xmlns.com/foaf/0.1/homepage');
+  Node bibframe_provider_role_pred = Node.createURI('http://bibframe.org/vocab-list/#providerRole');
+  
+  oaiclient.getChangesSince(null, 'gokb') { record ->
+    println("Org... ${record.header.identifier}");
+    println("       ${record.metadata.gokb.org.@id}");
+    println("       ${record.metadata.gokb.org.name.text()}");
+  
+    Node orgUri = Node.createURI('uri://'+record.header.identifier);
+  
+    graph.add(new Triple(orgUri, type_pred, foaf_org_type));
+    graph.add(new Triple(orgUri, type_pred, foaf_agent_type));
+    graph.add(new Triple(orgUri, type_pred, schema_org_organisation_type));
+    graph.add(new Triple(orgUri, type_pred, bibframe_organisation_type));
+    graph.add(new Triple(orgUri, type_pred, owl_organisation_type));
+    graph.add(new Triple(orgUri, type_pred, owl_thing_type));
+    graph.add(new Triple(orgUri, skos_pref_label_pred,  Node.createLiteral(record.metadata.gokb.org.name.text())));
+    graph.add(new Triple(orgUri, foaf_homepage_pred,  Node.createLiteral(record.metadata.gokb.org.homepage?.text())));
+  
+    record.metadata.gokb.org.identifiers.identifier.each {
+      println(it.text())
+      graph.add(new Triple(orgUri, owl_same_as_pred,  Node.createLiteral(it.text())));
+    }
+
+    record.metadata.gokb.org.variantNames.variantName.each {
+      println(it.text())
+      graph.add(new Triple(orgUri, skos_alt_label_pred,  Node.createLiteral(it.text())));
+    }
+
+    record.metadata.gokb.org.roles.role.each {
+      println(it.text())
+      graph.add(new Triple(orgUri, bibframe_provider_role_pred,  Node.createLiteral(it.text())));
+    }
+
+
   }
+  
+  graph.close();
+}
+catch ( Exception e ) {
+  e.printStackTrace();
+}
+finally {
 }
 
 println("Done.");

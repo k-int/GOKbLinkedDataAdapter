@@ -53,8 +53,6 @@ if ( ! config.maxtimestamp ) {
   config.maxtimestamp = 0
 }
 
-OaiClient oaiclient = new OaiClient(host:'https://gokb.k-int.com/gokb/oai/orgs');
-// OaiClient oaiclient = new OaiClient(host:'https://gokb.kuali.org/gokb/oai/orgs');
 println("Starting...");
 
 try {
@@ -75,7 +73,11 @@ try {
   Node foaf_homepage_pred = Node.createURI('http://xmlns.com/foaf/0.1/homepage');
   Node bibframe_provider_role_pred = Node.createURI('http://bibframe.org/vocab-list/#providerRole');
   
-  oaiclient.getChangesSince(null, 'gokb') { record ->
+  OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'/gokb/oai/orgs');
+  // OaiClient oaiclient = new OaiClient(host:'https://gokb.k-int.com/gokb/oai/orgs');
+  // OaiClient oaiclient = new OaiClient(host:'https://gokb.kuali.org/gokb/oai/orgs');
+
+  oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
     println("Org... ${record.header.identifier}");
     println("       ${record.metadata.gokb.org.@id}");
     println("       ${record.metadata.gokb.org.name.text()}");
@@ -106,9 +108,21 @@ try {
       graph.add(new Triple(orgUri, bibframe_provider_role_pred,  Node.createLiteral(it.text())));
     }
 
+  }
 
+  OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'/gokb/oai/titles');
+  oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
+  }
+
+  OaiClient oaiclient_platforms = new OaiClient(host:config.oai_server+'/gokb/oai/platforms');
+  oaiclient_platforms.getChangesSince(null, 'gokb') { record ->
   }
   
+  
+  OaiClient oaiclient_packages = new OaiClient(host:config.oai_server+'/gokb/oai/packages');
+  oaiclient_packages.getChangesSince(null, 'gokb') { record ->
+  }
+
   graph.close();
 }
 catch ( Exception e ) {

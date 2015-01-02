@@ -65,13 +65,19 @@ try {
   Node bibframe_organisation_type = Node.createURI('http://bibframe.org/vocab-list/#Organisation');
   Node owl_organisation_type = Node.createURI('http://www.w3.org/2002/07/owl#Organisation');
   Node owl_thing_type = Node.createURI('http://www.w3.org/2002/07/owl#Thing');
+  Node owl_work_type = Node.createURI('http://www.w3.org/2002/07/owl#Work');
   
   Node type_pred = Node.createURI('http://www.w3.org/1999/02/22-rdf-syntax-ns#type');
+
   Node skos_pref_label_pred = Node.createURI('http://www.w3.org/2004/02/skos/core#prefLabel');
   Node skos_alt_label_pred = Node.createURI('http://www.w3.org/2004/02/skos/core#altLabel');
   Node owl_same_as_pred = Node.createURI('http://www.w3.org/2002/07/owl#sameAs');
+
   Node foaf_homepage_pred = Node.createURI('http://xmlns.com/foaf/0.1/homepage');
+
   Node bibframe_provider_role_pred = Node.createURI('http://bibframe.org/vocab-list/#providerRole');
+
+  Node dc_publisher_pred = Node.createURI('http://purl.org/dc/terms/publisher');
   
   OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'/gokb/oai/orgs');
   // OaiClient oaiclient = new OaiClient(host:'https://gokb.k-int.com/gokb/oai/orgs');
@@ -112,6 +118,23 @@ try {
 
   OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'/gokb/oai/titles');
   oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
+    Node titleUri = Node.createURI('uri://'+record.header.identifier);
+    graph.add(new Triple(titleUri, type_pred, owl_work_type));
+
+    graph.add(new Triple(titleUri, skos_pref_label_pred, Node.createLiteral(record.metadata.gokb.title.name.text()) ));
+    graph.add(new Triple(titleUri, dc_publisher_pred, Node.createLiteral(record.metadata.gokb.title.publisher?name.text()) ));
+
+
+    record.metadata.gokb.org.identifiers.identifier.each {
+      println(it.text())
+      graph.add(new Triple(orgUri, owl_same_as_pred,  Node.createLiteral(it.text())));
+    }
+
+    record.metadata.gokb.org.variantNames.variantName.each {
+      println(it.text())
+      graph.add(new Triple(orgUri, skos_alt_label_pred,  Node.createLiteral(it.text())));
+    }
+
   }
 
   OaiClient oaiclient_platforms = new OaiClient(host:config.oai_server+'/gokb/oai/platforms');

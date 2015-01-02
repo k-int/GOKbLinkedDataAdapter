@@ -128,12 +128,12 @@ try {
 
     record.metadata.gokb.org.identifiers.identifier.each {
       println(it.text())
-      graph.add(new Triple(orgUri, owl_same_as_pred,  Node.createLiteral(it.text())));
+      graph.add(new Triple(titleUri, owl_same_as_pred,  Node.createLiteral(it.text())));
     }
 
     record.metadata.gokb.org.variantNames.variantName.each {
       println(it.text())
-      graph.add(new Triple(orgUri, skos_alt_label_pred,  Node.createLiteral(it.text())));
+      graph.add(new Triple(titleUri, skos_alt_label_pred,  Node.createLiteral(it.text())));
     }
 
   }

@@ -88,7 +88,7 @@ try {
     println("       ${record.metadata.gokb.org.@id}");
     println("       ${record.metadata.gokb.org.name.text()}");
   
-    Node orgUri = Node.createURI('uri://'+record.header.identifier);
+    Node orgUri = Node.createURI('http://www.gokb.org/data/orgs/'+record.metadata.gokb.org.@id);
   
     graph.add(new Triple(orgUri, type_pred, foaf_org_type));
     graph.add(new Triple(orgUri, type_pred, foaf_agent_type));
@@ -118,7 +118,7 @@ try {
 
   OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'/gokb/oai/titles');
   oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
-    Node titleUri = Node.createURI('uri://'+record.header.identifier);
+    Node titleUri = Node.createURI('http://www.gokb.org/data/titles/'+record.metadata.gokb.title.@id);
     graph.add(new Triple(titleUri, type_pred, owl_work_type));
 
     graph.add(new Triple(titleUri, skos_pref_label_pred, Node.createLiteral(record.metadata.gokb.title.name.text()) ));

@@ -79,7 +79,8 @@ try {
 
   Node dc_publisher_pred = Node.createURI('http://purl.org/dc/terms/publisher');
   
-  OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'/gokb/oai/orgs');
+  println("Connect to ${config.oai_server}gokb/oai/orgs");
+  OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'gokb/oai/orgs');
   // OaiClient oaiclient = new OaiClient(host:'https://gokb.k-int.com/gokb/oai/orgs');
   // OaiClient oaiclient = new OaiClient(host:'https://gokb.kuali.org/gokb/oai/orgs');
 
@@ -122,7 +123,7 @@ try {
     graph.add(new Triple(titleUri, type_pred, owl_work_type));
 
     graph.add(new Triple(titleUri, skos_pref_label_pred, Node.createLiteral(record.metadata.gokb.title.name.text()) ));
-    graph.add(new Triple(titleUri, dc_publisher_pred, Node.createLiteral(record.metadata.gokb.title.publisher?name.text()) ));
+    graph.add(new Triple(titleUri, dc_publisher_pred, Node.createLiteral(record.metadata.gokb.title.publisher?.name.text()) ));
 
 
     record.metadata.gokb.org.identifiers.identifier.each {

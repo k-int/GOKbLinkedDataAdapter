@@ -78,6 +78,9 @@ try {
   Node bibframe_provider_role_pred = Node.createURI('http://bibframe.org/vocab-list/#providerRole');
 
   Node dc_publisher_pred = Node.createURI('http://purl.org/dc/terms/publisher');
+  Node dc_format_pred = Node.createURI('http://purl.org/dc/terms/format');
+
+  Node bibo_status_pred = Node.createURI('http://purl.org/ontology/bibo/status');
   
   println("Connect to ${config.oai_server}gokb/oai/orgs");
   OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'gokb/oai/orgs');
@@ -119,9 +122,16 @@ try {
     Node titleUri = Node.createURI('http://www.gokb.org/data/titles/'+record.metadata.gokb.title.@id);
     graph.add(new Triple(titleUri, type_pred, owl_work_type));
 
-    graph.add(new Triple(titleUri, skos_pref_label_pred, Node.createLiteral(record.metadata.gokb.title.name.text()) ));
-    graph.add(new Triple(titleUri, dc_publisher_pred, Node.createLiteral(record.metadata.gokb.title.publisher?.name.text()) ));
+    // http://purl.org/spar/datacite/issn
+    // http://purl.org/spar/datacite/eissn
+    graph.add(new Triple(titleUri, dc_format_pred, record.metadata.gokb.medium.text()));
+    // graph.add(new Triple(titleUri, bibo_status_pred,  not in OAI data yet));
 
+    graph.add(new Triple(titleUri, skos_pref_label_pred, Node.createLiteral(record.metadata.gokb.title.name.text()) ));
+    if ( record.metadata.gokb.title.publisher?.@id ) {
+      Node publisher = Node.createURI('http://www.gokb.org/data/orgs/'+record.metadata.gokb.title.publisher?.@id);
+      graph.add(new Triple(titleUri, dc_publisher_pred, publisher));
+    }
 
     record.metadata.gokb.org.identifiers.identifier.each {
       graph.add(new Triple(titleUri, owl_same_as_pred,  Node.createLiteral(it.text())));
@@ -137,6 +147,7 @@ try {
   oaiclient_platforms.getChangesSince(null, 'gokb') { record ->
     Node platformUri = Node.createURI('http://www.gokb.org/data/platforms/'+record.metadata.gokb.platform.@id);
     graph.add(new Triple(platformUri, skos_pref_label_pred, Node.createLiteral(record.metadata.gokb.platform.name.text()) ));
+
     record.metadata.gokb.org.identifiers.identifier.each {
       graph.add(new Triple(titleUri, owl_same_as_pred,  Node.createLiteral(it.text())));
     }
@@ -152,13 +163,25 @@ try {
   oaiclient_packages.getChangesSince(null, 'gokb') { record ->
     Node packageUri = Node.createURI('http://www.gokb.org/data/packages/'+record.metadata.gokb.package.@id);
     graph.add(new Triple(packageUri, skos_pref_label_pred, Node.createLiteral(record.metadata.gokb.package.name.text()) ));
-    record.metadata.gokb.org.identifiers.identifier.each {
+    record.metadata.gokb.package.identifiers.identifier.each {
       graph.add(new Triple(titleUri, owl_same_as_pred,  Node.createLiteral(it.text())));
     }
 
-    record.metadata.gokb.org.variantNames.variantName.each {
+    record.metadata.gokb.package.variantNames.variantName.each {
       graph.add(new Triple(titleUri, skos_alt_label_pred,  Node.createLiteral(it.text())));
     }
+
+    record.metadata.gokb.package.TIPPs.TIPP.each { tipp ->
+      Node tippUri = Node.createURI('http://www.gokb.org/data/packages/'+tipp.@id);
+      graph.add(new Triple(tippUri, skos_pref_label_pred, Node.createLiteral(
+          tipp.title.name.text + ' in package ' + record.metadata.gokb.package.name.text() + ' via ' + tipp.platform.name.text() )))
+      
+      graph.add(new Triple(tippUri, gokb_hasTitle_pred, Node.createLiteral('http://www.gokb.org/data/titles/'+tipp.title.@id)));
+      graph.add(new Triple(tippUri, gokb_hasPackage_pred, Node.createLiteral('http://www.gokb.org/data/packages/'+record.metadata.gokb.package.@id)));
+      graph.add(new Triple(tippUri, gokb_hasPlatform_pred, Node.createLiteral('http://www.gokb.org/data/platform/'+record.metadata.gokb.platform.@id)));
+
+    }
+    
 
   }
 

@@ -37,6 +37,19 @@ TO get the right grape download settings
 
 
 
+Copy 
+
+virtjdbc-4.1.jar
+and
+virtjena-2.jar
+
+to 
+
+~/.groovy/grapes/virtuoso/virtjdbc/jars/
+and
+~/.groovy/grapes/virtuoso/virtjena/jars/
+
+
 
 To avoid slow startup downloading grapes
 

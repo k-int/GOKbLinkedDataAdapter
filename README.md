@@ -45,9 +45,17 @@ virtjena-2.jar
 
 to 
 
+
+
 ~/.groovy/grapes/virtuoso/virtjdbc/jars/
 and
 ~/.groovy/grapes/virtuoso/virtjena/jars/
+A
+
+mkdir -p ~/.groovy/grapes/virtuoso/virtjdbc/jars/
+mkdir -p ~/.groovy/grapes/virtuoso/virtjena/jars
+cp virtjdbc-4.1.jar ~/.groovy/grapes/virtuoso/virtjdbc/jars/
+cp virtjena-2.jar ~/.groovy/grapes/virtuoso/virtjena/jars/
 
 
 
@@ -55,3 +63,5 @@ To avoid slow startup downloading grapes
 
 
 groovy -Dgroovy.grape.autoDownload=false  ./xxx.groovy
+
+

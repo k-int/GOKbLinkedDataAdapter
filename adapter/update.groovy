@@ -157,6 +157,8 @@ try {
   OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'gokb/oai/titles');
   oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
 
+    println("Process title with id:: ${record.metadata.gokb.title.@id}");
+
     Node titleUri = NodeFactory.createURI('http://www.gokb.org/data/titles/'+record.metadata.gokb.title.@id);
     graph.add(new Triple(titleUri, type_pred, owl_work_type));
     graph.add(new Triple(titleUri, dc_format_pred, NodeFactory.createLiteral(record.metadata.gokb.title.medium.text())));

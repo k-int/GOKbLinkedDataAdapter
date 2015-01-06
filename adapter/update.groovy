@@ -75,6 +75,8 @@ try {
   Node rdfs_resource_pred = NodeFactory.createURI('http://www.w3.org/2000/01/rdf-schema#Resource');
   Node foaf_document_type = NodeFactory.createURI('http://xmlns.com/foaf/spec/#term_Document');
 
+  Node gokb_tipp_type = NodeFactory.createURI('http://gokb.org/type/#tipp');
+
   Node skos_pref_label_pred = NodeFactory.createURI('http://www.w3.org/2004/02/skos/core#prefLabel');
   Node skos_alt_label_pred = NodeFactory.createURI('http://www.w3.org/2004/02/skos/core#altLabel');
   Node owl_same_as_pred = NodeFactory.createURI('http://www.w3.org/2002/07/owl#sameAs');
@@ -249,7 +251,7 @@ try {
       Node tippUri = NodeFactory.createURI('http://www.gokb.org/data/packages/'+tipp.@id);
       def prefLabel = tipp.title.name.text() + ' in package ' + record.metadata.gokb.package.name.text() + ' via ' + tipp.platform.name.text()
       graph.add(new Triple(tippUri, skos_pref_label_pred, NodeFactory.createLiteral(prefLabel)))
-      graph.add(new Triple(tippUri, type_pred, dc_collection_type))
+      graph.add(new Triple(tippUri, type_pred, gokb_tipp_type))
       graph.add(new Triple(tippUri, gokb_hasTitle_pred, NodeFactory.createLiteral('http://www.gokb.org/data/titles/'+tipp.title.@id)));
       graph.add(new Triple(tippUri, gokb_hasPackage_pred, NodeFactory.createLiteral('http://www.gokb.org/data/packages/'+record.metadata.gokb.package.@id)));
       graph.add(new Triple(tippUri, gokb_hasPlatform_pred, NodeFactory.createLiteral('http://www.gokb.org/data/platform/'+record.metadata.gokb.platform.@id)));

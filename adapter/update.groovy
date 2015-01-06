@@ -2,7 +2,7 @@
 
 // @GrabResolver(name='es', root='https://oss.sonatype.org/content/repositories/releases')
 @GrabResolver(name='mvnRepository', root='http://central.maven.org/maven2/')
-@GrabResolver(name='kint', root='http://projects.k-int.com/nexus-webapp-1.4.0/content/repositories/releases')
+@GrabResolver(name='kint', root='http://nexus.k-int.com/content/repositories/releases');
 @Grapes([
   @Grab(group='net.sf.opencsv', module='opencsv', version='2.3'),
   @Grab(group='org.apache.httpcomponents', module='httpmime', version='4.1.2'),

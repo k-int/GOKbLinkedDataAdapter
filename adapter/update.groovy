@@ -155,7 +155,7 @@ try {
   }
 
   OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'gokb/oai/titles');
-  oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
+  oaiclient_titles.getChangesSince(null, 'gokb') { record ->
 
     println("Process title with id:: ${record.metadata.gokb.title.@id}");
 

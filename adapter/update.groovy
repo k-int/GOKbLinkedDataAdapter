@@ -119,168 +119,188 @@ try {
   Node stac_authenticationMethod_pred = NodeFactory.createURI('http://securitytoolbox.appspot.com/stac#AuthenticationMethod');
   Node service_providedby_pred = NodeFactory.createURI('http://dini-ag-kim.github.io/service-ontology/service.html#providedby');
 
+  
   println("Connect to ${config.oai_server}gokb/oai/orgs");
   OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'gokb/oai/orgs');
 
   oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
-    println("Org... ${record.header.identifier}");
-    println("       ${record.metadata.gokb.org.@id}");
-    println("       ${record.metadata.gokb.org.name.text()}");
-  
-    Node orgUri = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.org.@id);
-  
-    addToGraph(orgUri, type_pred, foaf_org_type, true);
-    addToGraph(orgUri, type_pred, foaf_agent_type, true);
-    addToGraph(orgUri, type_pred, schema_org_organisation_type, true);
-    addToGraph(orgUri, type_pred, bibframe_organisation_type, true);
-    addToGraph(orgUri, type_pred, owl_organisation_type, true);
-    addToGraph(orgUri, type_pred, owl_thing_type, true);
-    addToGraph(orgUri, skos_pref_label_pred, record.metadata.gokb.org.name.text(),false);
-    addToGraph(orgUri, foaf_homepage_pred, record.metadata.gokb.org.homepage?.text(),false);
-  
-    record.metadata.gokb.org.identifiers.identifier.each {
-      addToGraph(orgUri, owl_same_as_pred,it.text(),false);
-    }
+    try{
+      println("Org... ${record.header.identifier}");
+      println("       ${record.metadata.gokb.org.@id}");
+      println("       ${record.metadata.gokb.org.name.text()}");
+    
+      Node orgUri = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.org.@id);
+    
+      addToGraph(orgUri, type_pred, foaf_org_type, true);
+      addToGraph(orgUri, type_pred, foaf_agent_type, true);
+      addToGraph(orgUri, type_pred, schema_org_organisation_type, true);
+      addToGraph(orgUri, type_pred, bibframe_organisation_type, true);
+      addToGraph(orgUri, type_pred, owl_organisation_type, true);
+      addToGraph(orgUri, type_pred, owl_thing_type, true);
+      addToGraph(orgUri, skos_pref_label_pred, record.metadata.gokb.org.name.text(),false);
+      addToGraph(orgUri, foaf_homepage_pred, record.metadata.gokb.org.homepage?.text(),false);
+    
+      record.metadata.gokb.org.identifiers.identifier.each {
+        addToGraph(orgUri, owl_same_as_pred,it.text(),false);
+      }
 
-    record.metadata.gokb.org.variantNames.variantName.each {
-      addToGraph(orgUri, skos_alt_label_pred, it.text(),false);
-    }
+      record.metadata.gokb.org.variantNames.variantName.each {
+        addToGraph(orgUri, skos_alt_label_pred, it.text(),false);
+      }
 
-    record.metadata.gokb.org.roles.role.each {
-      addToGraph(orgUri, bibframe_provider_role_pred, it.text(),false);
-    }
+      record.metadata.gokb.org.roles.role.each {
+        addToGraph(orgUri, bibframe_provider_role_pred, it.text(),false);
+      }
 
-    addToGraph(orgUri,gokb_mission_pred, record.metadata.gokb.org.mission.text(),false);
+      addToGraph(orgUri,gokb_mission_pred, record.metadata.gokb.org.mission.text(),false);
+    }catch(Exception e){
+      println "EXCEPTION WHILE PROCESSING ORGS"
+      e.printStackTrace();
+    }
   }
 
   OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'gokb/oai/titles');
   oaiclient_titles.getChangesSince(null, 'gokb') { record ->
+    try{
+      println("Process title with id:: ${record.metadata.gokb.title.@id}");
 
-    println("Process title with id:: ${record.metadata.gokb.title.@id}");
+      Node titleUri = NodeFactory.createURI("${config.base_resource_url}/data/titles/" +record.metadata.gokb.title.@id);
+      addToGraph(titleUri, type_pred, owl_work_type, true);
+      addToGraph(titleUri, dc_format_pred, record.metadata.gokb.title.medium.text(),false);
 
-    Node titleUri = NodeFactory.createURI("${config.base_resource_url}/data/titles/" +record.metadata.gokb.title.@id);
-    addToGraph(titleUri, type_pred, owl_work_type, true);
-    addToGraph(titleUri, dc_format_pred, record.metadata.gokb.title.medium.text(),false);
-
-    addToGraph(titleUri, skos_pref_label_pred,record.metadata.gokb.title.name.text(), false);
-    if ( record.metadata.gokb.title.publisher.@id?.text()?.trim() ) {
-      Node publisher = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.title.publisher.@id);
-      addToGraph(titleUri, dc_publisher_pred, publisher, true);
-    }
-
-    record.metadata.gokb.title.identifiers.identifier.each {
-     addToGraph(titleUri, owl_same_as_pred, it.@value.text(), false);
-    }
-
-    record.metadata.gokb.title.variantNames.variantName.each {
-     addToGraph(titleUri, skos_alt_label_pred, it.@value.text(),false);
-    }
-
-    record.metadata.gokb.title.identifiers.identifier.each {
-      if(it.@namespace == 'issn')
-         addToGraph(titleUri, datacite_issn_pred, it.@value.text(), false);   
-      else if (it.@namespace == 'eissn')
-         addToGraph(titleUri, datacite_eissn_pred, it.@value.text(), false); 
-    }
-    
-    // addToGraph(titleUri, bibo_status_pred, NodeFactory.createLiteral(record.metadata.gokb.title.OAStatus.text()));
-    addToGraph(titleUri,gokb_pureOpen_pred, record.metadata.gokb.title.pureOA.text(), false);
-
-    record.metadata.gokb.title.history.historyEvent.each { he ->
-      he.from.each { fromIt ->
-        internalId_he_from = fromIt.internalId.text()
-        if(internalId_he_from){
-          Node precTitle = NodeFactory.createURI("${config.base_resource_url}/data/titles/"  + internalId_he_from);
-          addToGraph(titleUri,bibo_precededBy_pred,precTitle, true);
-        }
-
+      addToGraph(titleUri, skos_pref_label_pred,record.metadata.gokb.title.name.text(), false);
+      if ( record.metadata.gokb.title.publisher.@id?.text()?.trim() ) {
+        Node publisher = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.title.publisher.@id);
+        addToGraph(titleUri, dc_publisher_pred, publisher, true);
       }
-      he.to.each { fromTo ->
-        internalId_he_to = fromTo.internalId.text()
-        if(internalId_he_to){
-          Node precTitle = NodeFactory.createURI("${config.base_resource_url}/data/titles/"  + internalId_he_to);
-          addToGraph(titleUri,bibo_succeeded_pred,precTitle, true);
-        }
+
+      record.metadata.gokb.title.identifiers.identifier.each {
+       addToGraph(titleUri, owl_same_as_pred, it.@value.text(), false);
       }
+
+      record.metadata.gokb.title.variantNames.variantName.each {
+       addToGraph(titleUri, skos_alt_label_pred, it.@value.text(),false);
+      }
+
+      record.metadata.gokb.title.identifiers.identifier.each {
+        if(it.@namespace == 'issn')
+           addToGraph(titleUri, datacite_issn_pred, it.@value.text(), false);   
+        else if (it.@namespace == 'eissn')
+           addToGraph(titleUri, datacite_eissn_pred, it.@value.text(), false); 
+      }
+      
+      // addToGraph(titleUri, bibo_status_pred, NodeFactory.createLiteral(record.metadata.gokb.title.OAStatus.text()));
+      addToGraph(titleUri,gokb_pureOpen_pred, record.metadata.gokb.title.pureOA.text(), false);
+
+      record.metadata.gokb.title.history.historyEvent.each { he ->
+        he.from.each { fromIt ->
+          internalId_he_from = fromIt.internalId.text()
+          if(internalId_he_from){
+            Node precTitle = NodeFactory.createURI("${config.base_resource_url}/data/titles/"  + internalId_he_from);
+            addToGraph(titleUri,bibo_precededBy_pred,precTitle, true);
+          }
+
+        }
+        he.to.each { fromTo ->
+          internalId_he_to = fromTo.internalId.text()
+          if(internalId_he_to){
+            Node precTitle = NodeFactory.createURI("${config.base_resource_url}/data/titles/"  + internalId_he_to);
+            addToGraph(titleUri,bibo_succeeded_pred,precTitle, true);
+          }
+        }
+      }    
+    }catch(Exception e){
+      println "EXCEPTION WHILE PROCESSING TITLES"
+      e.printStackTrace();
     }
   }
 
   OaiClient oaiclient_platforms = new OaiClient(host:config.oai_server+'gokb/oai/platforms');
   oaiclient_platforms.getChangesSince(null, 'gokb') { record ->
-    Node platformUri = NodeFactory.createURI("${config.base_resource_url}/data/platforms/" +record.metadata.gokb.platform.@id);
-    addToGraph(platformUri, skos_pref_label_pred,record.metadata.gokb,latform.name.text(), false);
+    try{
+      Node platformUri = NodeFactory.createURI("${config.base_resource_url}/data/platforms/" +record.metadata.gokb.platform.@id);
+      addToGraph(platformUri, skos_pref_label_pred,record.metadata.gokb,latform.name.text(), false);
 
-    record.metadata.gokb.platform.variantNames.variantName.each {
-      addToGraph(platformUri, skos_alt_label_pred, it.text(),false );
+      record.metadata.gokb.platform.variantNames.variantName.each {
+        addToGraph(platformUri, skos_alt_label_pred, it.text(),false );
+      }
+
+      addToGraph(platformUri, type_pred, dc_service_type, true);
+
+      addToGraph(platformUri, bibo_status_pred, record.metadata.gokb.platform.status.text(), false);
+      
+      addToGraph(platformUri, mods_locationUrl_pred, record.metadata.gokb.platform.primaryUrl.text(), false);
+
+      addToGraph(platformUri, stac_authenticationMethod_pred, record.metadata.gokb.platform.authentication.text(), false);
+
+      record.metadata.gokb.platform.identifiers.identifier.each {
+        addToGraph(platformUri, owl_same_as_pred, it.text(), false);
+      }
+      record.metadata.gokb.platform.variantNames.variantName.each {
+        addToGraph(platformUri, skos_alt_label_pred, it.text(), false);
+      }      
+    }catch(Exception e){
+      println "EXCEPTION WHILE PROCESSING PLATFORMS"
+      e.printStackTrace();
     }
-
-    addToGraph(platformUri, type_pred, dc_service_type, true);
-
-    addToGraph(platformUri, bibo_status_pred, record.metadata.gokb.platform.status.text(), false);
-    
-    addToGraph(platformUri, mods_locationUrl_pred, record.metadata.gokb.platform.primaryUrl.text(), false);
-
-    addToGraph(platformUri, stac_authenticationMethod_pred, record.metadata.gokb.platform.authentication.text(), false);
-
-    record.metadata.gokb.platform.identifiers.identifier.each {
-      addToGraph(platformUri, owl_same_as_pred, it.text(), false);
-    }
-    record.metadata.gokb.platform.variantNames.variantName.each {
-      addToGraph(platformUri, skos_alt_label_pred, it.text(), false);
-    }
-
   }
-  
-  
+
   OaiClient oaiclient_packages = new OaiClient(host:config.oai_server+'gokb/oai/packages');
   oaiclient_packages.getChangesSince(null, 'gokb') { record ->
-    Node packageUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id);
-    addToGraph(packageUri, skos_pref_label_pred, record.metadata.gokb.package.name.text(), false);
-    record.metadata.gokb.package.identifiers.identifier.each {
-      addToGraph(packageUri, owl_same_as_pred, it.text(), false);
+    try{
+      Node packageUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id);
+      println "Create package with URI: ${packageUri}"
+      addToGraph(packageUri, skos_pref_label_pred, record.metadata.gokb.package.name.text(), false);
+
+      addToGraph(packageUri, type_pred, dc_collection_type, true);
+
+      addToGraph(packageUri, dc_type_type, record.metadata.gokb.package.scope.text(), false);
+      addToGraph(packageUri, schema_paymenttype_type, record.metadata.gokb.package.paymentType.text(), false);
+      record.metadata.gokb.package.variantNames.variantName.each {
+        addToGraph(packageUri, skos_alt_label_pred, it.text(), false);
+      }
+
+      addToGraph(packageUri, service_providedby_pred,record.metadata.gokb.package.nominalProvider.text(), false);
+
+      record.metadata.gokb.package.TIPPs.TIPP.each { tipp ->
+        try{
+          Node tippUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +tipp.@id);
+          def prefLabel = tipp.title.name.text() + ' in package ' + record.metadata.gokb.package.name.text() + ' via ' + tipp.platform.name.text()
+          addToGraph(tippUri, skos_pref_label_pred, prefLabel, false);
+          addToGraph(tippUri, type_pred, gokb_tipp_type, true);
+          addToGraph(tippUri, gokb_hasTitle_pred, "${config.base_resource_url}/data/titles/" +tipp.title.@id, false)
+          addToGraph(tippUri, gokb_hasPackage_pred, "${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id, false)
+          addToGraph(tippUri, gokb_hasPlatform_pred, "${config.base_resource_url}/data/platform/" +record.metadata.gokb.platform.@id, false)
+          addToGraph(tippUri,bibo_status_pred, tipp.status.text(), false)
+
+          addToGraph(tippUri, gokb_accessStart_pred, tipp.access.@start.text(), false)
+          addToGraph(tippUri, gokb_accessEnd_pred, tipp.access.@end.text(), false)
+
+          addToGraph(tippUri, mods_locationUrl_pred, tipp.url.text(), false)
+
+          addToGraph(tippUri, dc_medium_pred, tipp.medium.text(), false)
+
+          addToGraph(tippUri, gokb_coverageStartDate_pred, tipp.coverage.@startDate.text(), false)
+          addToGraph(tippUri, gokb_coverageEndDate_pred, tipp.coverage.@endDate.text(), false)
+          addToGraph(tippUri, gokb_coverageStartIssue_pred, tipp.coverage.@startIssue.text(),false)
+          addToGraph(tippUri, gokb_coverageEndIssue_pred, tipp.coverage.@endIssue.text(), false)
+          addToGraph(tippUri, gokb_coverageStartVolume_pred, tipp.coverage.@startVolume.text(), false)
+          addToGraph(tippUri, gokb_coverageEndVolume_pred, tipp.coverage.@endVolume.text(), false)
+          addToGraph(tippUri, gokb_coverageEmbargo_pred, tipp.coverage.@embargo.text(), false)
+
+          addToGraph(tippUri, mods_identifier_pred, tipp.@id.text(), false)
+
+          addToGraph(tippUri, gokb_belongsToPkg_pred, packageUri, true )
+        }catch(Exception e){
+          println "EXCEPTION WHILE PROCESSING TIPPS"
+          e.printStackTrace();
+        }
+
+      }    
+    }catch(Exception e){
+      println "EXCEPTION WHILE PROCESSING PACKAGES"
+      e.printStackTrace();
     }
-
-    addToGraph(packageUri, type_pred, dc_collection_type, true);
-
-    addToGraph(packageUri, dc_type_type, record.metadata.gokb.package.scope.text(), false);
-    addToGraph(packageUri, schema_paymenttype_type, record.metadata.gokb.package.paymentType.text(), false);
-    record.metadata.gokb.package.variantNames.variantName.each {
-      addToGraph(packageUri, skos_alt_label_pred, it.text(), false);
-    }
-
-    addToGraph(packageUri, service_providedby_pred,record.metadata.gokb.package.nominalProvider.text(), false);
-    
-    record.metadata.gokb.package.TIPPs.TIPP.each { tipp ->
-      Node tippUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +tipp.@id);
-      def prefLabel = tipp.title.name.text() + ' in package ' + record.metadata.gokb.package.name.text() + ' via ' + tipp.platform.name.text()
-      addToGraph(tippUri, skos_pref_label_pred, prefLabel, false);
-      addToGraph(tippUri, type_pred, gokb_tipp_type, true);
-      addToGraph(tippUri, gokb_hasTitle_pred, "${config.base_resource_url}/data/titles/" +tipp.title.@id, false)
-      addToGraph(tippUri, gokb_hasPackage_pred, "${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id, false)
-      addToGraph(tippUri, gokb_hasPlatform_pred, "${config.base_resource_url}/data/platform/" +record.metadata.gokb.platform.@id, false)
-      addToGraph(tippUri,bibo_status_pred, tipp.status.text(), false)
-
-      addToGraph(tippUri, gokb_accessStart_pred, tipp.access.@start.text(), false)
-      addToGraph(tippUri, gokb_accessEnd_pred, tipp.access.@end.text(), false)
-
-      addToGraph(tippUri, mods_locationUrl_pred, tipp.url.text(), false)
-
-      addToGraph(tippUri, dc_medium_pred, tipp.medium.text(), false)
-
-      addToGraph(tippUri, gokb_coverageStartDate_pred, tipp.coverage.@startDate.text(), false)
-      addToGraph(tippUri, gokb_coverageEndDate_pred, tipp.coverage.@endDate.text(), false)
-      addToGraph(tippUri, gokb_coverageStartIssue_pred, tipp.coverage.@startIssue.text(),false)
-      addToGraph(tippUri, gokb_coverageEndIssue_pred, tipp.coverage.@endIssue.text(), false)
-      addToGraph(tippUri, gokb_coverageStartVolume_pred, tipp.coverage.@startVolume.text(), false)
-      addToGraph(tippUri, gokb_coverageEndVolume_pred, tipp.coverage.@endVolume.text(), false)
-      addToGraph(tippUri, gokb_coverageEmbargo_pred, tipp.coverage.@embargo.text(), false)
-
-      addToGraph(tippUri, mods_identifier_pred, tipp.@id.text(), false)
-
-      addToGraph(tippUri, gokb_belongsToPkg_pred, packageUri, true )
-
-    }
-    
   }
 
   graph.close();

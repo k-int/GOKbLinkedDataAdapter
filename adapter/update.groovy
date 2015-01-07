@@ -77,6 +77,8 @@ try {
   Node rdfs_resource_pred = NodeFactory.createURI('http://www.w3.org/2000/01/rdf-schema#Resource');
   Node foaf_document_type = NodeFactory.createURI('http://xmlns.com/foaf/spec/#term_Document');
 
+  Node gokb_tipp_type = NodeFactory.createURI('http://gokb.org/type/#tipp');
+
   Node skos_pref_label_pred = NodeFactory.createURI('http://www.w3.org/2004/02/skos/core#prefLabel');
   Node skos_alt_label_pred = NodeFactory.createURI('http://www.w3.org/2004/02/skos/core#altLabel');
   Node owl_same_as_pred = NodeFactory.createURI('http://www.w3.org/2002/07/owl#sameAs');
@@ -155,7 +157,9 @@ try {
   }
 
   OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'gokb/oai/titles');
-  oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
+  oaiclient_titles.getChangesSince(null, 'gokb') { record ->
+
+    println("Process title with id:: ${record.metadata.gokb.title.@id}");
 
     Node titleUri = NodeFactory.createURI('http://www.gokb.org/data/titles/'+record.metadata.gokb.title.@id);
     addToGraph(titleUri, type_pred, owl_work_type, true);
@@ -250,7 +254,7 @@ try {
       Node tippUri = NodeFactory.createURI('http://www.gokb.org/data/packages/'+tipp.@id);
       def prefLabel = tipp.title.name.text() + ' in package ' + record.metadata.gokb.package.name.text() + ' via ' + tipp.platform.name.text()
       addToGraph(tippUri, skos_pref_label_pred, prefLabel, false);
-      addToGraph(tippUri, type_pred, dc_collection_type, true);
+      addToGraph(tippUri, type_pred, gokb_tipp_type, true);
       addToGraph(tippUri, gokb_hasTitle_pred, 'http://www.gokb.org/data/titles/'+tipp.title.@id, false)
       addToGraph(tippUri, gokb_hasPackage_pred, 'http://www.gokb.org/data/packages/'+record.metadata.gokb.package.@id, false)
       addToGraph(tippUri, gokb_hasPlatform_pred, 'http://www.gokb.org/data/platform/'+record.metadata.gokb.platform.@id, false)

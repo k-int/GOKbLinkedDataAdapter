@@ -121,15 +121,13 @@ try {
 
   println("Connect to ${config.oai_server}gokb/oai/orgs");
   OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'gokb/oai/orgs');
-  // OaiClient oaiclient = new OaiClient(host:'https://gokb.k-int.com/gokb/oai/orgs');
-  // OaiClient oaiclient = new OaiClient(host:'https://gokb.kuali.org/gokb/oai/orgs');
 
   oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
     println("Org... ${record.header.identifier}");
     println("       ${record.metadata.gokb.org.@id}");
     println("       ${record.metadata.gokb.org.name.text()}");
   
-    Node orgUri = NodeFactory.createURI('http://www.gokb.org/data/orgs/'+record.metadata.gokb.org.@id);
+    Node orgUri = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.org.@id);
   
     addToGraph(orgUri, type_pred, foaf_org_type, true);
     addToGraph(orgUri, type_pred, foaf_agent_type, true);
@@ -160,22 +158,22 @@ try {
 
     println("Process title with id:: ${record.metadata.gokb.title.@id}");
 
-    Node titleUri = NodeFactory.createURI('http://www.gokb.org/data/titles/'+record.metadata.gokb.title.@id);
+    Node titleUri = NodeFactory.createURI("${config.base_resource_url}/data/titles/" +record.metadata.gokb.title.@id);
     addToGraph(titleUri, type_pred, owl_work_type, true);
     addToGraph(titleUri, dc_format_pred, record.metadata.gokb.title.medium.text(),false);
 
     addToGraph(titleUri, skos_pref_label_pred,record.metadata.gokb.title.name.text(), false);
-    if ( record.metadata.gokb.title.publisher?.@id ) {
-      Node publisher = NodeFactory.createURI('http://www.gokb.org/data/orgs/'+record.metadata.gokb.title.publisher?.@id);
+    if ( record.metadata.gokb.title.publisher.@id?.text()?.trim() ) {
+      Node publisher = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.title.publisher.@id);
       addToGraph(titleUri, dc_publisher_pred, publisher, true);
     }
 
     record.metadata.gokb.title.identifiers.identifier.each {
-     addToGraph(titleUri, owl_same_as_pred, it.text(), false);
+     addToGraph(titleUri, owl_same_as_pred, it.@value.text(), false);
     }
 
     record.metadata.gokb.title.variantNames.variantName.each {
-     addToGraph(titleUri, skos_alt_label_pred, it.text(),false);
+     addToGraph(titleUri, skos_alt_label_pred, it.@value.text(),false);
     }
 
     record.metadata.gokb.title.identifiers.identifier.each {
@@ -192,7 +190,7 @@ try {
       he.from.each { fromIt ->
         internalId_he_from = fromIt.internalId.text()
         if(internalId_he_from){
-          Node precTitle = NodeFactory.createURI('http://www.gokb.org/data/titles/' + internalId_he_from);
+          Node precTitle = NodeFactory.createURI("${config.base_resource_url}/data/titles/"  + internalId_he_from);
           addToGraph(titleUri,bibo_precededBy_pred,precTitle, true);
         }
 
@@ -200,7 +198,7 @@ try {
       he.to.each { fromTo ->
         internalId_he_to = fromTo.internalId.text()
         if(internalId_he_to){
-          Node precTitle = NodeFactory.createURI('http://www.gokb.org/data/titles/' + internalId_he_to);
+          Node precTitle = NodeFactory.createURI("${config.base_resource_url}/data/titles/"  + internalId_he_to);
           addToGraph(titleUri,bibo_succeeded_pred,precTitle, true);
         }
       }
@@ -209,7 +207,7 @@ try {
 
   OaiClient oaiclient_platforms = new OaiClient(host:config.oai_server+'gokb/oai/platforms');
   oaiclient_platforms.getChangesSince(null, 'gokb') { record ->
-    Node platformUri = NodeFactory.createURI('http://www.gokb.org/data/platforms/'+record.metadata.gokb.platform.@id);
+    Node platformUri = NodeFactory.createURI("${config.base_resource_url}/data/platforms/" +record.metadata.gokb.platform.@id);
     addToGraph(platformUri, skos_pref_label_pred,record.metadata.gokb,latform.name.text(), false);
 
     record.metadata.gokb.platform.variantNames.variantName.each {
@@ -236,7 +234,7 @@ try {
   
   OaiClient oaiclient_packages = new OaiClient(host:config.oai_server+'gokb/oai/packages');
   oaiclient_packages.getChangesSince(null, 'gokb') { record ->
-    Node packageUri = NodeFactory.createURI('http://www.gokb.org/data/packages/'+record.metadata.gokb.package.@id);
+    Node packageUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id);
     addToGraph(packageUri, skos_pref_label_pred, record.metadata.gokb.package.name.text(), false);
     record.metadata.gokb.package.identifiers.identifier.each {
       addToGraph(packageUri, owl_same_as_pred, it.text(), false);
@@ -253,13 +251,13 @@ try {
     addToGraph(packageUri, service_providedby_pred,record.metadata.gokb.package.nominalProvider.text(), false);
     
     record.metadata.gokb.package.TIPPs.TIPP.each { tipp ->
-      Node tippUri = NodeFactory.createURI('http://www.gokb.org/data/packages/'+tipp.@id);
+      Node tippUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +tipp.@id);
       def prefLabel = tipp.title.name.text() + ' in package ' + record.metadata.gokb.package.name.text() + ' via ' + tipp.platform.name.text()
       addToGraph(tippUri, skos_pref_label_pred, prefLabel, false);
       addToGraph(tippUri, type_pred, gokb_tipp_type, true);
-      addToGraph(tippUri, gokb_hasTitle_pred, 'http://www.gokb.org/data/titles/'+tipp.title.@id, false)
-      addToGraph(tippUri, gokb_hasPackage_pred, 'http://www.gokb.org/data/packages/'+record.metadata.gokb.package.@id, false)
-      addToGraph(tippUri, gokb_hasPlatform_pred, 'http://www.gokb.org/data/platform/'+record.metadata.gokb.platform.@id, false)
+      addToGraph(tippUri, gokb_hasTitle_pred, "${config.base_resource_url}/data/titles/" +tipp.title.@id, false)
+      addToGraph(tippUri, gokb_hasPackage_pred, "${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id, false)
+      addToGraph(tippUri, gokb_hasPlatform_pred, "${config.base_resource_url}/data/platform/" +record.metadata.gokb.platform.@id, false)
       addToGraph(tippUri,bibo_status_pred, tipp.status.text(), false)
 
       addToGraph(tippUri, gokb_accessStart_pred, tipp.access.@start.text(), false)

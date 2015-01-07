@@ -55,7 +55,6 @@ if ( ! config.maxtimestamp ) {
 
 println("Starting...");
 
-def graph
 
 try {
   
@@ -187,7 +186,7 @@ try {
     }
     
     // addToGraph(titleUri, bibo_status_pred, NodeFactory.createLiteral(record.metadata.gokb.title.OAStatus.text()));
-    addToGraph(titleUri,gokb_pureOpen_pred, record.metadata.gokb.title.pureOA.text(), true);
+    addToGraph(titleUri,gokb_pureOpen_pred, record.metadata.gokb.title.pureOA.text(), false);
 
     record.metadata.gokb.title.history.historyEvent.each { he ->
       he.from.each { fromIt ->
@@ -269,13 +268,13 @@ try {
 
       addToGraph(tippUri, gokb_coverageStartDate_pred, tipp.coverage.@startDate.text(), false)
       addToGraph(tippUri, gokb_coverageEndDate_pred, tipp.coverage.@endDate.text(), false)
-      addToGraph(tippUri, gokb_coverageStartIssue_pred, tipp.coverage.@startIssue.text()),false)
-      addToGraph(tippUri, gokb_coverageEndIssue_pred, tipp.coverage.@endIssue.text()), false)
-      addToGraph(tippUri, gokb_coverageStartVolume_pred, tipp.coverage.@startVolume.text()), false)
-      addToGraph(tippUri, gokb_coverageEndVolume_pred, tipp.coverage.@endVolume.text()), false)
-      addToGraph(tippUri, gokb_coverageEmbargo_pred, tipp.coverage.@embargo.text()), false)
+      addToGraph(tippUri, gokb_coverageStartIssue_pred, tipp.coverage.@startIssue.text(),false)
+      addToGraph(tippUri, gokb_coverageEndIssue_pred, tipp.coverage.@endIssue.text(), false)
+      addToGraph(tippUri, gokb_coverageStartVolume_pred, tipp.coverage.@startVolume.text(), false)
+      addToGraph(tippUri, gokb_coverageEndVolume_pred, tipp.coverage.@endVolume.text(), false)
+      addToGraph(tippUri, gokb_coverageEmbargo_pred, tipp.coverage.@embargo.text(), false)
 
-      addToGraph(tippUri, mods_identifier_pred, tipp.@id.text() , false)
+      addToGraph(tippUri, mods_identifier_pred, tipp.@id.text(), false)
 
       addToGraph(tippUri, gokb_belongsToPkg_pred, packageUri, true )
 
@@ -296,12 +295,13 @@ println("Done.");
 config_file.withWriter { writer ->
   config.writeTo(writer)
 }
+
 def addToGraph(subj, pred, obj, isNode){
   if(isNode){
-    addToGraph(subj, pred, obj))
+    graph.add(new Triple(subj, pred, obj));
   }else{
     if(obj?.trim()){
-      addToGraph(subj, pred, NodeFactory.createLiteral(obj)))
+      graph.add(new Triple(subj, pred, NodeFactory.createLiteral(obj)));
     }
   }
 }

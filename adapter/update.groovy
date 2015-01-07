@@ -190,18 +190,21 @@ try {
 
     record.metadata.gokb.title.history.historyEvent.each { he ->
       he.from.each { fromIt ->
-        Node precTitle = NodeFactory.createURI('http://www.gokb.org/data/titles/'+fromIt.internalId.text());
-        addToGraph(titleUri,bibo_precededBy_pred,precTitle, true);
+        internalId_he_from = fromIt.internalId.text()
+        if(internalId_he_from){
+          Node precTitle = NodeFactory.createURI('http://www.gokb.org/data/titles/' + internalId_he_from);
+          addToGraph(titleUri,bibo_precededBy_pred,precTitle, true);
+        }
 
       }
-      he.to.each { fromItto ->
-        Node precTitle = NodeFactory.createURI('http://www.gokb.org/data/titles/'+to.internalId.text());
-        addToGraph(titleUri,bibo_succeeded_pred,precTitle, true);
-
+      he.to.each { fromTo ->
+        internalId_he_to = fromTo.internalId.text()
+        if(internalId_he_to){
+          Node precTitle = NodeFactory.createURI('http://www.gokb.org/data/titles/' + internalId_he_to);
+          addToGraph(titleUri,bibo_succeeded_pred,precTitle, true);
+        }
       }
     }
-
-
   }
 
   OaiClient oaiclient_platforms = new OaiClient(host:config.oai_server+'gokb/oai/platforms');

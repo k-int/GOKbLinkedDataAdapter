@@ -76,7 +76,6 @@ try {
   Node rdfs_resource_pred = NodeFactory.createURI('http://www.w3.org/2000/01/rdf-schema#Resource');
   Node foaf_document_type = NodeFactory.createURI('http://xmlns.com/foaf/spec/#term_Document');
 
-  Node gokb_tipp_type = NodeFactory.createURI('http://gokb.org/type/#tipp');
 
   Node skos_pref_label_pred = NodeFactory.createURI('http://www.w3.org/2004/02/skos/core#prefLabel');
   Node skos_alt_label_pred = NodeFactory.createURI('http://www.w3.org/2004/02/skos/core#altLabel');
@@ -95,6 +94,7 @@ try {
   Node datacite_issn_pred = NodeFactory.createURI('http://purl.org/spar/datacite/issn')
   Node datacite_eissn_pred = NodeFactory.createURI('http://purl.org/spar/datacite/eissn')
 
+  Node gokb_tipp_type = NodeFactory.createURI('http://gokb.org/type/#tipp');
   Node gokb_mission_pred = NodeFactory.createURI('http://gokb.org/organization/#mission');
   Node gokb_pureOpen_pred = NodeFactory.createURI('http://gokb.org/title/#pureOpenAccess')
   Node gokb_hasTitle_pred = NodeFactory.createURI('http://gokb.org/tipp/#hasTitle')
@@ -179,10 +179,10 @@ try {
     }
 
     record.metadata.gokb.title.identifiers.identifier.each {
-      if(it.@namespace.text().toLowerCase() == 'issn')
-         addToGraph(titleUri, datacite_issn_pred, it.text(), false);
-      else if (it.@namespace.text().toLowerCase() == 'eissn')
-         addToGraph(titleUri, datacite_eissn_pred, it.text(), false); 
+      if(it.@namespace == 'issn')
+         addToGraph(titleUri, datacite_issn_pred, it.@value.text(), false);   
+      else if (it.@namespace == 'eissn')
+         addToGraph(titleUri, datacite_eissn_pred, it.@value.text(), false); 
     }
     
     // addToGraph(titleUri, bibo_status_pred, NodeFactory.createLiteral(record.metadata.gokb.title.OAStatus.text()));

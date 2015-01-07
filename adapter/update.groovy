@@ -2,7 +2,7 @@
 
 // @GrabResolver(name='es', root='https://oss.sonatype.org/content/repositories/releases')
 @GrabResolver(name='mvnRepository', root='http://central.maven.org/maven2/')
-@GrabResolver(name='kint', root='http://nexus.k-int.com/content/repositories/releases');
+@GrabResolver(name='kint', root='http://nexus.k-int.com/content/repositories/releases')
 @Grapes([
   @Grab(group='net.sf.opencsv', module='opencsv', version='2.3'),
   @Grab(group='org.apache.httpcomponents', module='httpmime', version='4.1.2'),
@@ -55,9 +55,11 @@ if ( ! config.maxtimestamp ) {
 
 println("Starting...");
 
+def graph
+
 try {
   
-  def graph = new VirtGraph('uri://gokb.org/', config.store_uri, "dba", "dba");
+  graph = new VirtGraph('uri://gokb.org/', config.store_uri, "dba", "dba");
   
   Node foaf_org_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Organization');
   Node foaf_agent_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Agent');
@@ -128,70 +130,70 @@ try {
   
     Node orgUri = NodeFactory.createURI('http://www.gokb.org/data/orgs/'+record.metadata.gokb.org.@id);
   
-    graph.add(new Triple(orgUri, type_pred, foaf_org_type));
-    graph.add(new Triple(orgUri, type_pred, foaf_agent_type));
-    graph.add(new Triple(orgUri, type_pred, schema_org_organisation_type));
-    graph.add(new Triple(orgUri, type_pred, bibframe_organisation_type));
-    graph.add(new Triple(orgUri, type_pred, owl_organisation_type));
-    graph.add(new Triple(orgUri, type_pred, owl_thing_type));
-    graph.add(new Triple(orgUri, skos_pref_label_pred,  NodeFactory.createLiteral(record.metadata.gokb.org.name.text())));
-    graph.add(new Triple(orgUri, foaf_homepage_pred,  NodeFactory.createLiteral(record.metadata.gokb.org.homepage?.text())));
+    addToGraph(orgUri, type_pred, foaf_org_type, true);
+    addToGraph(orgUri, type_pred, foaf_agent_type, true);
+    addToGraph(orgUri, type_pred, schema_org_organisation_type, true);
+    addToGraph(orgUri, type_pred, bibframe_organisation_type, true);
+    addToGraph(orgUri, type_pred, owl_organisation_type, true);
+    addToGraph(orgUri, type_pred, owl_thing_type, true);
+    addToGraph(orgUri, skos_pref_label_pred, record.metadata.gokb.org.name.text(),false);
+    addToGraph(orgUri, foaf_homepage_pred, record.metadata.gokb.org.homepage?.text(),false);
   
     record.metadata.gokb.org.identifiers.identifier.each {
-      graph.add(new Triple(orgUri, owl_same_as_pred,  NodeFactory.createLiteral(it.text())));
+      addToGraph(orgUri, owl_same_as_pred,it.text(),false);
     }
 
     record.metadata.gokb.org.variantNames.variantName.each {
-      graph.add(new Triple(orgUri, skos_alt_label_pred,  NodeFactory.createLiteral(it.text())));
+      addToGraph(orgUri, skos_alt_label_pred, it.text(),false);
     }
 
     record.metadata.gokb.org.roles.role.each {
-      graph.add(new Triple(orgUri, bibframe_provider_role_pred,  NodeFactory.createLiteral(it.text())));
+      addToGraph(orgUri, bibframe_provider_role_pred, it.text(),false);
     }
 
-    graph.add(new Triple(orgUri,gokb_mission_pred, NodeFactory.createLiteral(record.metadata.gokb.org.mission.text())));
+    addToGraph(orgUri,gokb_mission_pred, record.metadata.gokb.org.mission.text(),false);
   }
 
   OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'gokb/oai/titles');
   oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
 
     Node titleUri = NodeFactory.createURI('http://www.gokb.org/data/titles/'+record.metadata.gokb.title.@id);
-    graph.add(new Triple(titleUri, type_pred, owl_work_type));
-    graph.add(new Triple(titleUri, dc_format_pred, NodeFactory.createLiteral(record.metadata.gokb.title.medium.text())));
+    addToGraph(titleUri, type_pred, owl_work_type, true);
+    addToGraph(titleUri, dc_format_pred, record.metadata.gokb.title.medium.text(),false);
 
-    graph.add(new Triple(titleUri, skos_pref_label_pred, NodeFactory.createLiteral(record.metadata.gokb.title.name.text()) ));
+    addToGraph(titleUri, skos_pref_label_pred,record.metadata.gokb.title.name.text(), false);
     if ( record.metadata.gokb.title.publisher?.@id ) {
       Node publisher = NodeFactory.createURI('http://www.gokb.org/data/orgs/'+record.metadata.gokb.title.publisher?.@id);
-      graph.add(new Triple(titleUri, dc_publisher_pred, publisher));
+      addToGraph(titleUri, dc_publisher_pred, publisher, true);
     }
 
     record.metadata.gokb.title.identifiers.identifier.each {
-      graph.add(new Triple(titleUri, owl_same_as_pred,  NodeFactory.createLiteral(it.text())));
+     addToGraph(titleUri, owl_same_as_pred, it.text(), false);
     }
 
     record.metadata.gokb.title.variantNames.variantName.each {
-      graph.add(new Triple(titleUri, skos_alt_label_pred,  NodeFactory.createLiteral(it.text())));
+     addToGraph(titleUri, skos_alt_label_pred, it.text(),false);
     }
 
     record.metadata.gokb.title.identifiers.identifier.each {
-      if(it.@namespace.text() == 'issn')
-          graph.add(new Triple(titleUri, datacite_issn_pred,  NodeFactory.createLiteral(it.text())));
-      else if (it.@namespace.text() == 'eissn')
-          graph.add(new Triple(titleUri, datacite_eissn_pred,  NodeFactory.createLiteral(it.text()))); 
+      if(it.@namespace.text().toLowerCase() == 'issn')
+         addToGraph(titleUri, datacite_issn_pred, it.text(), false);
+      else if (it.@namespace.text().toLowerCase() == 'eissn')
+         addToGraph(titleUri, datacite_eissn_pred, it.text(), false); 
     }
     
-    // graph.add(new Triple(titleUri, bibo_status_pred, NodeFactory.createLiteral(record.metadata.gokb.title.OAStatus.text()));
-    graph.add(new Triple(titleUri,gokb_pureOpen_pred,NodeFactory.createLiteral(record.metadata.gokb.title.pureOA.text())));
+    // addToGraph(titleUri, bibo_status_pred, NodeFactory.createLiteral(record.metadata.gokb.title.OAStatus.text()));
+    addToGraph(titleUri,gokb_pureOpen_pred, record.metadata.gokb.title.pureOA.text(), true);
 
     record.metadata.gokb.title.history.historyEvent.each { he ->
       he.from.each { fromIt ->
         Node precTitle = NodeFactory.createURI('http://www.gokb.org/data/titles/'+fromIt.internalId.text());
-        graph.add(new Triple(titleUri,bibo_precededBy_pred,precTitle));
+        addToGraph(titleUri,bibo_precededBy_pred,precTitle, true);
 
       }
       he.to.each { fromItto ->
         Node precTitle = NodeFactory.createURI('http://www.gokb.org/data/titles/'+to.internalId.text());
-        graph.add(new Triple(titleUri,bibo_succeeded_pred,precTitle));
+        addToGraph(titleUri,bibo_succeeded_pred,precTitle, true);
 
       }
     }
@@ -202,25 +204,25 @@ try {
   OaiClient oaiclient_platforms = new OaiClient(host:config.oai_server+'gokb/oai/platforms');
   oaiclient_platforms.getChangesSince(null, 'gokb') { record ->
     Node platformUri = NodeFactory.createURI('http://www.gokb.org/data/platforms/'+record.metadata.gokb.platform.@id);
-    graph.add(new Triple(platformUri, skos_pref_label_pred, NodeFactory.createLiteral(record.metadata.gokb.platform.name.text()) ));
+    addToGraph(platformUri, skos_pref_label_pred,record.metadata.gokb,latform.name.text(), false);
 
     record.metadata.gokb.platform.variantNames.variantName.each {
-      graph.add(new Triple(platformUri, skos_alt_label_pred,  NodeFactory.createLiteral(it.text())));
+      addToGraph(platformUri, skos_alt_label_pred, it.text(),false );
     }
 
-    graph.add(new Triple(platformUri, type_pred, dc_service_type));
+    addToGraph(platformUri, type_pred, dc_service_type, true);
 
-    graph.add(new Triple(platformUri, bibo_status_pred, NodeFactory.createLiteral(record.metadata.gokb.platform.status.text())));
+    addToGraph(platformUri, bibo_status_pred, record.metadata.gokb.platform.status.text(), false);
     
-    graph.add(new Triple(platformUri, mods_locationUrl_pred, NodeFactory.createLiteral(record.metadata.gokb.platform.primaryUrl.text())));
+    addToGraph(platformUri, mods_locationUrl_pred, record.metadata.gokb.platform.primaryUrl.text(), false);
 
-    graph.add(new Triple(platformUri, stac_authenticationMethod_pred, NodeFactory.createLiteral(record.metadata.gokb.platform.authentication.text())));
+    addToGraph(platformUri, stac_authenticationMethod_pred, record.metadata.gokb.platform.authentication.text(), false);
 
     record.metadata.gokb.platform.identifiers.identifier.each {
-      graph.add(new Triple(platformUri, owl_same_as_pred,  NodeFactory.createLiteral(it.text())));
+      addToGraph(platformUri, owl_same_as_pred, it.text(), false);
     }
     record.metadata.gokb.platform.variantNames.variantName.each {
-      graph.add(new Triple(platformUri, skos_alt_label_pred,  NodeFactory.createLiteral(it.text())));
+      addToGraph(platformUri, skos_alt_label_pred, it.text(), false);
     }
 
   }
@@ -229,50 +231,49 @@ try {
   OaiClient oaiclient_packages = new OaiClient(host:config.oai_server+'gokb/oai/packages');
   oaiclient_packages.getChangesSince(null, 'gokb') { record ->
     Node packageUri = NodeFactory.createURI('http://www.gokb.org/data/packages/'+record.metadata.gokb.package.@id);
-    graph.add(new Triple(packageUri, skos_pref_label_pred, NodeFactory.createLiteral(record.metadata.gokb.package.name.text()) ));
+    addToGraph(packageUri, skos_pref_label_pred, record.metadata.gokb.package.name.text(), false);
     record.metadata.gokb.package.identifiers.identifier.each {
-      graph.add(new Triple(packageUri, owl_same_as_pred,  NodeFactory.createLiteral(it.text())));
+      addToGraph(packageUri, owl_same_as_pred, it.text(), false);
     }
 
-    graph.add(new Triple(packageUri, type_pred, dc_collection_type))
+    addToGraph(packageUri, type_pred, dc_collection_type, true);
 
-    graph.add(new Triple(packageUri, dc_type_type, NodeFactory.createLiteral(record.metadata.gokb.package.scope.text())))
-    graph.add(new Triple(packageUri, schema_paymenttype_type, NodeFactory.createLiteral(record.metadata.gokb.package.paymentType.text())))
+    addToGraph(packageUri, dc_type_type, record.metadata.gokb.package.scope.text(), false);
+    addToGraph(packageUri, schema_paymenttype_type, record.metadata.gokb.package.paymentType.text(), false);
     record.metadata.gokb.package.variantNames.variantName.each {
-      graph.add(new Triple(packageUri, skos_alt_label_pred,  NodeFactory.createLiteral(it.text())));
+      addToGraph(packageUri, skos_alt_label_pred, it.text(), false);
     }
 
-    def providedby = NodeFactory.createLiteral(record.metadata.gokb.package.nominalProvider.text())
-    graph.add(new Triple(packageUri, service_providedby_pred,providedby))
+    addToGraph(packageUri, service_providedby_pred,record.metadata.gokb.package.nominalProvider.text(), false);
     
     record.metadata.gokb.package.TIPPs.TIPP.each { tipp ->
       Node tippUri = NodeFactory.createURI('http://www.gokb.org/data/packages/'+tipp.@id);
       def prefLabel = tipp.title.name.text() + ' in package ' + record.metadata.gokb.package.name.text() + ' via ' + tipp.platform.name.text()
-      graph.add(new Triple(tippUri, skos_pref_label_pred, NodeFactory.createLiteral(prefLabel)))
-      graph.add(new Triple(tippUri, type_pred, dc_collection_type))
-      graph.add(new Triple(tippUri, gokb_hasTitle_pred, NodeFactory.createLiteral('http://www.gokb.org/data/titles/'+tipp.title.@id)));
-      graph.add(new Triple(tippUri, gokb_hasPackage_pred, NodeFactory.createLiteral('http://www.gokb.org/data/packages/'+record.metadata.gokb.package.@id)));
-      graph.add(new Triple(tippUri, gokb_hasPlatform_pred, NodeFactory.createLiteral('http://www.gokb.org/data/platform/'+record.metadata.gokb.platform.@id)));
-      graph.add(new Triple(tippUri,bibo_status_pred, NodeFactory.createLiteral(tipp.status.text())))
+      addToGraph(tippUri, skos_pref_label_pred, prefLabel, false);
+      addToGraph(tippUri, type_pred, dc_collection_type, true);
+      addToGraph(tippUri, gokb_hasTitle_pred, 'http://www.gokb.org/data/titles/'+tipp.title.@id, false)
+      addToGraph(tippUri, gokb_hasPackage_pred, 'http://www.gokb.org/data/packages/'+record.metadata.gokb.package.@id, false)
+      addToGraph(tippUri, gokb_hasPlatform_pred, 'http://www.gokb.org/data/platform/'+record.metadata.gokb.platform.@id, false)
+      addToGraph(tippUri,bibo_status_pred, tipp.status.text(), false)
 
-      graph.add(new Triple(tippUri, gokb_accessStart_pred, NodeFactory.createLiteral(tipp.access.@start.text())))
-      graph.add(new Triple(tippUri, gokb_accessEnd_pred, NodeFactory.createLiteral(tipp.access.@end.text())))
+      addToGraph(tippUri, gokb_accessStart_pred, tipp.access.@start.text(), false)
+      addToGraph(tippUri, gokb_accessEnd_pred, tipp.access.@end.text(), false)
 
-      graph.add(new Triple(tippUri, mods_locationUrl_pred, NodeFactory.createLiteral(tipp.url.text())))
+      addToGraph(tippUri, mods_locationUrl_pred, tipp.url.text(), false)
 
-      graph.add(new Triple(tippUri, dc_medium_pred, NodeFactory.createLiteral(tipp.medium.text())))
+      addToGraph(tippUri, dc_medium_pred, tipp.medium.text(), false)
 
-      graph.add(new Triple(tippUri, gokb_coverageStartDate_pred, NodeFactory.createLiteral(tipp.coverage.@startDate.text())))
-      graph.add(new Triple(tippUri, gokb_coverageEndDate_pred, NodeFactory.createLiteral(tipp.coverage.@endDate.text())))
-      graph.add(new Triple(tippUri, gokb_coverageStartIssue_pred, NodeFactory.createLiteral(tipp.coverage.@startIssue.text())) )
-      graph.add(new Triple(tippUri, gokb_coverageEndIssue_pred, NodeFactory.createLiteral(tipp.coverage.@endIssue.text())) )
-      graph.add(new Triple(tippUri, gokb_coverageStartVolume_pred, NodeFactory.createLiteral(tipp.coverage.@startVolume.text())) )
-      graph.add(new Triple(tippUri, gokb_coverageEndVolume_pred, NodeFactory.createLiteral(tipp.coverage.@endVolume.text())) )
-      graph.add(new Triple(tippUri, gokb_coverageEmbargo_pred, NodeFactory.createLiteral(tipp.coverage.@embargo.text())) )
+      addToGraph(tippUri, gokb_coverageStartDate_pred, tipp.coverage.@startDate.text(), false)
+      addToGraph(tippUri, gokb_coverageEndDate_pred, tipp.coverage.@endDate.text(), false)
+      addToGraph(tippUri, gokb_coverageStartIssue_pred, tipp.coverage.@startIssue.text()),false)
+      addToGraph(tippUri, gokb_coverageEndIssue_pred, tipp.coverage.@endIssue.text()), false)
+      addToGraph(tippUri, gokb_coverageStartVolume_pred, tipp.coverage.@startVolume.text()), false)
+      addToGraph(tippUri, gokb_coverageEndVolume_pred, tipp.coverage.@endVolume.text()), false)
+      addToGraph(tippUri, gokb_coverageEmbargo_pred, tipp.coverage.@embargo.text()), false)
 
-      graph.add(new Triple(tippUri, mods_identifier_pred, NodeFactory.createLiteral(tipp.@id.text() )))
+      addToGraph(tippUri, mods_identifier_pred, tipp.@id.text() , false)
 
-      graph.add(new Triple(tippUri, gokb_belongsToPkg_pred, packageUri ))
+      addToGraph(tippUri, gokb_belongsToPkg_pred, packageUri, true )
 
     }
     
@@ -290,4 +291,13 @@ println("Done.");
 
 config_file.withWriter { writer ->
   config.writeTo(writer)
+}
+def addToGraph(subj, pred, obj, isNode){
+  if(isNode){
+    addToGraph(subj, pred, obj))
+  }else{
+    if(obj?.trim()){
+      addToGraph(subj, pred, NodeFactory.createLiteral(obj)))
+    }
+  }
 }

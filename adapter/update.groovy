@@ -121,6 +121,7 @@ try {
 
   
   println("Connect to ${config.oai_server}gokb/oai/orgs");
+  
   OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'gokb/oai/orgs');
 
   oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
@@ -245,7 +246,7 @@ try {
     }
   }
 
-  OaiClient oaiclient_packages = new OaiClient(host:config.oai_server+'gokb/oai/packages');
+ OaiClient oaiclient_packages = new OaiClient(host:config.oai_server+'gokb/oai/packages');
   oaiclient_packages.getChangesSince(null, 'gokb') { record ->
     try{
       Node packageUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id);
@@ -264,13 +265,19 @@ try {
 
       record.metadata.gokb.package.TIPPs.TIPP.each { tipp ->
         try{
-          Node tippUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +tipp.@id);
+          Node tippUri = NodeFactory.createURI("${config.base_resource_url}/data/tipps/" +tipp.@id);
           def prefLabel = tipp.title.name.text() + ' in package ' + record.metadata.gokb.package.name.text() + ' via ' + tipp.platform.name.text()
           addToGraph(tippUri, skos_pref_label_pred, prefLabel, false);
           addToGraph(tippUri, type_pred, gokb_tipp_type, true);
-          addToGraph(tippUri, gokb_hasTitle_pred, "${config.base_resource_url}/data/titles/" +tipp.title.@id, false)
-          addToGraph(tippUri, gokb_hasPackage_pred, "${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id, false)
-          addToGraph(tippUri, gokb_hasPlatform_pred, "${config.base_resource_url}/data/platform/" +record.metadata.gokb.platform.@id, false)
+          if(tipp.title.@id.text().trim()){
+            addToGraph(tippUri, gokb_hasTitle_pred, "${config.base_resource_url}/data/titles/" +tipp.title.@id, false)
+          }
+          if(record.metadata.gokb.package.@id.text().trim()){
+            addToGraph(tippUri, gokb_hasPackage_pred, "${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id, false)
+          }
+          if(record.metadata.gokb.platform.@id.text().trim()){
+            addToGraph(tippUri, gokb_hasPlatform_pred, "${config.base_resource_url}/data/platform/" +record.metadata.gokb.platform.@id, false)
+          }
           addToGraph(tippUri,bibo_status_pred, tipp.status.text(), false)
 
           addToGraph(tippUri, gokb_accessStart_pred, tipp.access.@start.text(), false)
@@ -295,7 +302,6 @@ try {
           println "EXCEPTION WHILE PROCESSING TIPPS"
           e.printStackTrace();
         }
-
       }    
     }catch(Exception e){
       println "EXCEPTION WHILE PROCESSING PACKAGES"

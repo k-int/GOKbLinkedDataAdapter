@@ -139,10 +139,20 @@ try {
       addToGraph(orgUri, type_pred, owl_organisation_type, true);
       addToGraph(orgUri, type_pred, owl_thing_type, true);
       addToGraph(orgUri, skos_pref_label_pred, record.metadata.gokb.org.name.text(),false);
-      addToGraph(orgUri, foaf_homepage_pred, record.metadata.gokb.org.homepage?.text(),false);
+      addUriToGraph(orgUri, foaf_homepage_pred, record.metadata.gokb.org.homepage?.text(),false);
     
       record.metadata.gokb.org.identifiers.identifier.each {
-        addToGraph(orgUri, owl_same_as_pred,it.text(),false);
+        if ( it.@datatype == 'uri' ) {
+          addUriToGraph(orgUri, it.@namespace+':'+owl_same_as_pred,it.text(),false);
+        }
+        else {
+          if ( it.text().toLowerCase().startsWith('http') ) {
+            addUriToGraph(orgUri, owl_same_as_pred,it.text(),false);
+          }
+          else {
+            addToGraph(orgUri, owl_same_as_pred,it.text(),false);
+          }
+        }
       }
 
       record.metadata.gokb.org.variantNames.variantName.each {

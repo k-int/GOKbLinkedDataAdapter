@@ -185,9 +185,17 @@ try {
 
       record.metadata.gokb.title.identifiers.identifier.each {
         if(it.@namespace == 'issn')
-           addToGraph(titleUri, datacite_issn_pred, it.@value.text(), false);   
+           addUriToGraph(titleUri, datacite_issn_pred, 'issn:'+it.@value.text(), false);   
         else if (it.@namespace == 'eissn')
-           addToGraph(titleUri, datacite_eissn_pred, it.@value.text(), false); 
+           addUriToGraph(titleUri, datacite_eissn_pred, 'eissn:'+it.@value.text(), false); 
+        else {
+          if ( it.@datatype == 'uri' ) {
+            addUriToGraph(titleUri, mods_identifier_pred, it.@namespace+':'+it.@value.text(), false); 
+          }
+          else {
+            addToGraph(titleUri, mods_identifier_pred, it.@value.text(), false); 
+          }
+        }
       }
       
       // addToGraph(titleUri, bibo_status_pred, NodeFactory.createLiteral(record.metadata.gokb.title.OAStatus.text()));
@@ -332,3 +340,15 @@ def addToGraph(subj, pred, obj, isNode){
     }
   }
 }
+
+
+def addUriToGraph(subj, pred, uri, isNode){
+  if(isNode){
+    graph.add(new Triple(subj, pred, obj));
+  }else{
+    if(obj?.trim()){
+      graph.add(new Triple(subj, pred, NodeFactory.createURI(uri)));
+    }
+  }
+}
+

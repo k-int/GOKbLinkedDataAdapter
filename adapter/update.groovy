@@ -354,9 +354,9 @@ def addToGraph(subj, pred, obj, isNode){
 
 def addUriToGraph(subj, pred, uri, isNode){
   if(isNode){
-    graph.add(new Triple(subj, pred, obj));
+    graph.add(new Triple(subj, pred, uri));
   }else{
-    if(obj?.trim()){
+    if(uri?.trim()){
       graph.add(new Triple(subj, pred, NodeFactory.createURI(uri)));
     }
   }

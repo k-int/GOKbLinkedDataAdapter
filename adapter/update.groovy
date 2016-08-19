@@ -58,7 +58,7 @@ println("Starting...");
 
 try {
   
-  graph = new VirtGraph('uri://gokb.org/', config.store_uri, "dba", "dba");
+  graph = new VirtGraph('uri://gokb.openlibraryfoundation.org/', config.store_uri, "dba", "dba");
   
   Node foaf_org_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Organization');
   Node foaf_agent_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Agent');

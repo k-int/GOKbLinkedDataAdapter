@@ -143,7 +143,7 @@ try {
     
       record.metadata.gokb.org.identifiers.identifier.each {
         if ( it.@datatype == 'uri' ) {
-          addUriToGraph(orgUri, it.@namespace+':'+owl_same_as_pred,it.text(),false);
+          addUriToGraph(orgUri, it.@namespace.text()+':'+owl_same_as_pred,it.text(),false);
         }
         else {
           if ( it.text().toLowerCase().startsWith('http') ) {
@@ -169,6 +169,8 @@ try {
       e.printStackTrace();
     }
   }
+
+  println("Connect to ${config.oai_server}gokb/oai/titles");
 
   OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'gokb/oai/titles');
   oaiclient_titles.getChangesSince(null, 'gokb') { record ->
@@ -234,6 +236,7 @@ try {
     }
   }
 
+  println("Connect to ${config.oai_server}gokb/oai/platforms");
   OaiClient oaiclient_platforms = new OaiClient(host:config.oai_server+'gokb/oai/platforms');
   oaiclient_platforms.getChangesSince(null, 'gokb') { record ->
     try{
@@ -264,6 +267,7 @@ try {
     }
   }
 
+  println("Connect to ${config.oai_server}gokb/oai/packages");
  OaiClient oaiclient_packages = new OaiClient(host:config.oai_server+'gokb/oai/packages');
   oaiclient_packages.getChangesSince(null, 'gokb') { record ->
     try{

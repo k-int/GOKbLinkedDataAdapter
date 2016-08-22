@@ -143,7 +143,7 @@ try {
     
       record.metadata.gokb.org.identifiers.identifier.each {
         if ( it.@datatype == 'uri' ) {
-          addUriToGraph(orgUri, it.@namespace.text()+':'+owl_same_as_pred,it.text(),false);
+          addUriToGraph(orgUri, owl_same_as_pred,it.text(),false);
         }
         else {
           if ( it.text().toLowerCase().startsWith('http') ) {

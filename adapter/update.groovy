@@ -59,7 +59,7 @@ println("Starting...");
 try {
   
   graph = new VirtGraph('uri://gokb.openlibraryfoundation.org/', config.store_uri, "dba", "dba");
-  
+
   Node foaf_org_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Organization');
   Node foaf_agent_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Agent');
   Node schema_paymenttype_type = NodeFactory.createURI('http://schema.org/PaymentMethod')
@@ -124,6 +124,8 @@ try {
   
   OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'gokb/oai/orgs');
 
+
+  // Use the OAI Client to get records from GOKb. The closure is called once for each record.
   oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
     try{
       println("Org... ${record.header.identifier}");
@@ -131,6 +133,9 @@ try {
       println("       ${record.metadata.gokb.org.name.text()}");
     
       Node orgUri = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.org.@id);
+
+      // We need to clear down any old triples for this resource URI.
+      // org.apache.jena.rdf.model.Resource res = org.apache.jena.rdf.model.ResourceFactory.
     
       addToGraph(orgUri, type_pred, foaf_org_type, true);
       addToGraph(orgUri, type_pred, foaf_agent_type, true);

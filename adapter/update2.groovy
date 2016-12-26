@@ -185,6 +185,11 @@ try {
       println("Process title with id:: ${record.metadata.gokb.title.@id}");
 
       Node titleUri = NodeFactory.createURI("${config.base_resource_url}/data/titles/" +record.metadata.gokb.title.@id);
+
+      org.apache.jena.graph.Triple delete_pattern = 
+                new org.apache.jena.graph.Triple(titleUri, Node.ANY, Node.ANY)
+      graph.delete(delete_pattern);
+    
       addToGraph(titleUri, type_pred, owl_work_type, true);
       addToGraph(titleUri, dc_format_pred, record.metadata.gokb.title.medium.text(),false);
 
@@ -248,6 +253,11 @@ try {
   oaiclient_platforms.getChangesSince(null, 'gokb') { record ->
     try{
       Node platformUri = NodeFactory.createURI("${config.base_resource_url}/data/platforms/" +record.metadata.gokb.platform.@id);
+
+      org.apache.jena.graph.Triple delete_pattern = 
+                new org.apache.jena.graph.Triple(platformUri, Node.ANY, Node.ANY)
+      graph.delete(delete_pattern);
+
       addToGraph(platformUri, skos_pref_label_pred,record.metadata.gokb,latform.name.text(), false);
 
       record.metadata.gokb.platform.variantNames.variantName.each {
@@ -279,6 +289,11 @@ try {
   oaiclient_packages.getChangesSince(null, 'gokb') { record ->
     try{
       Node packageUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id);
+
+      org.apache.jena.graph.Triple delete_pattern = 
+                new org.apache.jena.graph.Triple(packageUri, Node.ANY, Node.ANY)
+      graph.delete(delete_pattern);
+
       println "Create package with URI: ${packageUri}"
       addToGraph(packageUri, skos_pref_label_pred, record.metadata.gokb.package.name.text(), false);
 

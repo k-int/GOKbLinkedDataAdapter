@@ -58,10 +58,9 @@ println("Starting...");
 
 try {
 
-  //changed the graph uri
+  // graph = new VirtGraph('uri://gokb.openlibraryfoundation.org/', config.store_uri, "dba", "dba");
   graph = new VirtGraph('uri://localhost:8890/', config.store_uri, "dba", "dba");
 
-  //These are all URIs that are stored into variables?
   Node foaf_org_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Organization');
   Node foaf_agent_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Agent');
 //Replace with isAccessibleForFree  Node schema_paymenttype_type = NodeFactory.createURI('http://schema.org/PaymentMethod')
@@ -126,6 +125,8 @@ try {
 
   OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'gokb/oai/orgs');
 
+
+  // Use the OAI Client to get records from GOKb. The closure is called once for each record.
   oaiclient_orgs.getChangesSince(null, 'gokb') { record ->
     try{
       println("Org... ${record.header.identifier}");
@@ -133,6 +134,11 @@ try {
       println("       ${record.metadata.gokb.org.name.text()}");
 
       Node orgUri = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.org.@id);
+
+      // We need to clear down any old triples for this resource URI.
+      org.apache.jena.graph.Triple delete_pattern =
+                new org.apache.jena.graph.Triple(origUri, Node.ANY, Node.ANY)
+      graph.delete(delete_pattern);
 
       addToGraph(orgUri, type_pred, foaf_org_type, true);
       addToGraph(orgUri, type_pred, foaf_agent_type, true);
@@ -146,12 +152,16 @@ try {
       record.metadata.gokb.org.identifiers.identifier.each {
         if ( it.@datatype == 'uri' ) {
           addUriToGraph(orgUri, owl_same_as_pred,it.text(),false);
-        } else if ( it.text().toLowerCase().startsWith('http') ) {
+        }
+        else {
+          if ( it.text().toLowerCase().startsWith('http') ) {
             addUriToGraph(orgUri, owl_same_as_pred,it.text(),false);
-          } else {
-          addToGraph(orgUri, owl_same_as_pred,it.text(),false);
+          }
+          else {
+            addToGraph(orgUri, owl_same_as_pred,it.text(),false);
           }
         }
+      }
 
       record.metadata.gokb.org.variantNames.variantName.each {
         addToGraph(orgUri, skos_alt_label_pred, it.text(),false);
@@ -178,6 +188,11 @@ try {
 
 //Create URI for the selected title resource
       Node titleUri = NodeFactory.createURI("${config.base_resource_url}/data/titles/" +record.metadata.gokb.title.@id);
+
+      org.apache.jena.graph.Triple delete_pattern =
+                new org.apache.jena.graph.Triple(titleUri, Node.ANY, Node.ANY)
+      graph.delete(delete_pattern);
+
       addToGraph(titleUri, type_pred, bibframe_work_type, true);
       addToGraph(titleUri, dc_type_pred, record.metadata.gokb.title.medium.text(),false);
 
@@ -244,6 +259,11 @@ try {
   oaiclient_platforms.getChangesSince(null, 'gokb') { record ->
     try{
       Node platformUri = NodeFactory.createURI("${config.base_resource_url}/data/platforms/" +record.metadata.gokb.platform.@id);
+
+      org.apache.jena.graph.Triple delete_pattern =
+                new org.apache.jena.graph.Triple(platformUri, Node.ANY, Node.ANY)
+      graph.delete(delete_pattern);
+
       addToGraph(platformUri, skos_pref_label_pred,record.metadata.gokb.platform.name.text(), false);
 
       record.metadata.gokb.platform.variantNames.variantName.each {
@@ -276,6 +296,11 @@ try {
   oaiclient_packages.getChangesSince(null, 'gokb') { record ->
     try{
       Node packageUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id);
+
+      org.apache.jena.graph.Triple delete_pattern =
+                new org.apache.jena.graph.Triple(packageUri, Node.ANY, Node.ANY)
+      graph.delete(delete_pattern);
+
       println "Create package with URI: ${packageUri}"
       addToGraph(packageUri, skos_pref_label_pred, record.metadata.gokb.package.name.text(), false);
 

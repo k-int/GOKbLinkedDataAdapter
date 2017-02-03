@@ -138,7 +138,7 @@ try {
 
       // We need to clear down any old triples for this resource URI.
       org.apache.jena.graph.Triple delete_pattern =
-                new org.apache.jena.graph.Triple(origUri, Node.ANY, Node.ANY)
+                new org.apache.jena.graph.Triple(orgUri, Node.ANY, Node.ANY)
       graph.delete(delete_pattern);
 
       addToGraph(orgUri, type_pred, foaf_org_type, true);

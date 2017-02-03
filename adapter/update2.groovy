@@ -14,14 +14,12 @@
   @Grab(group='org.slf4j', module='jcl-over-slf4j', version='1.7.6'),
   @Grab(group='net.sourceforge.nekohtml', module='nekohtml', version='1.9.14'),
   @Grab(group='xerces', module='xercesImpl', version='2.9.1'),
-  @Grab(group='org.apache.jena', module='jena-tdb', version='1.0.2'),
-  @Grab(group='org.apache.jena', module='jena-core', version='2.11.2'),
-  @Grab(group='org.apache.jena', module='jena-arq', version='2.11.2'),
-  @Grab(group='org.apache.jena', module='jena-iri', version='1.0.2'),
-  @Grab(group='org.apache.jena', module='jena-spatial', version='1.0.1'),
-  @Grab(group='org.apache.jena', module='jena-security', version='2.11.2'),
-  @Grab(group='org.apache.jena', module='jena-text', version='1.0.1'),
-  @Grab(group='virtuoso', module='virtjena', version='2'),
+  @Grab(group='org.apache.jena', module='jena-core', version='3.1.1'),
+  @Grab(group='org.apache.jena', module='jena-arq', version='3.1.1'),
+  @Grab(group='org.apache.jena', module='jena-iri', version='3.1.1'),
+  @Grab(group='org.apache.jena', module='jena-spatial', version='3.1.1'),
+  @Grab(group='org.apache.jena', module='jena-text', version='3.1.1'),
+  @Grab(group='virtuoso', module='virtjena', version='3'),
   @Grab(group='virtuoso', module='virtjdbc', version='4.1')
 ])
 
@@ -36,14 +34,17 @@ import org.apache.http.*
 import org.apache.http.protocol.*
 import java.nio.charset.Charset
 import static groovy.json.JsonOutput.*
-import virtuoso.jena.driver.*;
-import com.hp.hpl.jena.query.*;
-import com.hp.hpl.jena.rdf.model.* ;
-import com.hp.hpl.jena.graph.*;
-import java.text.SimpleDateFormat
 import groovy.util.slurpersupport.GPathResult
 import org.apache.log4j.*
 import com.k_int.goai.*;
+
+
+import virtuoso.jena.driver.*;
+
+import org.apache.jena.query.*;
+import org.apache.jena.rdf.model.* ;
+import org.apache.jena.graph.*;
+import java.text.SimpleDateFormat
 
 def config_file = new File('GOKbLinkedDataAdapter-config.groovy')
 

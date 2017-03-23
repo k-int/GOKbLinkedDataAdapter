@@ -159,7 +159,7 @@ try {
             addUriToGraph(orgUri, owl_same_as_pred,it.text(),false);
           }
           else {
-            addToGraph(orgUri, owl_same_as_pred,it.text(),false);
+            addToGraph(orgUri, dc_identifier_pred,it.text(),false);
           }
         }
       }
@@ -169,7 +169,7 @@ try {
       }
 
       record.metadata.gokb.org.roles.role.each {
-        addToGraph(orgUri, bibframe_provider_role_pred, it.text(),false);
+        addToGraph(orgUri, bibframe_role_pred, it.text(),false);
       }
 
       addToGraph(orgUri,gokb_mission_pred, record.metadata.gokb.org.mission.text(),false);
@@ -219,11 +219,7 @@ try {
            addUriToGraph(titleUri, datacite_issn_pred, 'issn:'+it.@value.text(), false);
            } else if (it.@namespace == 'eissn'){
            addUriToGraph(titleUri, datacite_eissn_pred, 'eissn:'+it.@value.text(), false);
-           } else if ( it.@datatype == 'uri' ) {
-            addUriToGraph(titleUri, dc_identifier_pred, it.@namespace+':'+it.@value.text(), false);
-          } else if (it.text().toLowerCase().startsWith('http')) {
-              addUriToGraph(titleUri, dc_identifier_pred, it.@value.text(), false);
-            } else {
+           } else {
           addToGraph(titleUri, dc_identifier_pred, it.@value.text(), false);
           }
         }
@@ -273,7 +269,7 @@ try {
 
       addToGraph(platformUri, type_pred, dc_service_type, true);
 
-      addToGraph(platformUri, bibo_status_pred, record.metadata.gokb.platform.status.text(), false);
+      addToGraph(platformUri, bibframe_status_pred, record.metadata.gokb.platform.status.text(), false);
 
       addUriToGraph(platformUri, bibframe_electronicLocator_pred, record.metadata.gokb.platform.primaryUrl.text(), false);
 
@@ -326,13 +322,13 @@ try {
           addToGraph(tippUri, skos_pref_label_pred, prefLabel, false);
           addToGraph(tippUri, type_pred, gokb_tipp_type, true);
           if(tipp.title.@id.text().trim()){
-            addToGraph(tippUri, gokb_hasTitle_pred, "${config.base_resource_url}/data/titles/" +tipp.title.@id, false)
+            addUriToGraph(tippUri, gokb_hasTitle_pred, "${config.base_resource_url}/data/titles/" +tipp.title.@id, false)
           }
           if(record.metadata.gokb.package.@id.text().trim()){
-            addToGraph(tippUri, gokb_hasPackage_pred, "${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id, false)
+            addUriToGraph(tippUri, gokb_hasPackage_pred, "${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id, false)
           }
           if(record.metadata.gokb.platform.@id.text().trim()){
-            addToGraph(tippUri, gokb_hasPlatform_pred, "${config.base_resource_url}/data/platform/" +record.metadata.gokb.platform.@id, false)
+            addUriToGraph(tippUri, gokb_hasPlatform_pred, "${config.base_resource_url}/data/platform/" +record.metadata.gokb.platform.@id, false)
           }
           addToGraph(tippUri,bibo_status_pred, tipp.status.text(), false)
 

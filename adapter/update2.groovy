@@ -58,17 +58,18 @@ println("Starting...");
 
 
 try {
-  
-  graph = new VirtGraph('uri://gokb.openlibraryfoundation.org/', config.store_uri, "dba", "dba");
+
+  // graph = new VirtGraph('uri://gokb.openlibraryfoundation.org/', config.store_uri, "dba", "dba");
+  graph = new VirtGraph('uri://localhost:8890/', config.store_uri, "dba", "dba");
 
   Node foaf_org_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Organization');
   Node foaf_agent_type = NodeFactory.createURI('http://xmlns.com/foaf/0.1/Agent');
-  Node schema_paymenttype_type = NodeFactory.createURI('http://schema.org/PaymentMethod')
-  Node schema_org_organisation_type = NodeFactory.createURI('http://schema.org/Organisation');
-  Node bibframe_organisation_type = NodeFactory.createURI('http://bibframe.org/vocab-list/#Organisation');
-  Node owl_organisation_type = NodeFactory.createURI('http://www.w3.org/2002/07/owl#Organisation');
+//Replace with isAccessibleForFree  Node schema_paymenttype_type = NodeFactory.createURI('http://schema.org/PaymentMethod')
+  Node schema_org_organization_type = NodeFactory.createURI('http://schema.org/Organization');
+  Node bibframe_organization_type = NodeFactory.createURI('http://id.loc.gov/ontologies/bibframe/Organization');
+  Node bibframe_work_type = NodeFactory.createURI('http://id.loc.gov/ontologies/bibframe/Work');
+  Node dbpedia_organisation_type = NodeFactory.createURI('http://dbpedia.org/ontology/Organisation');
   Node owl_thing_type = NodeFactory.createURI('http://www.w3.org/2002/07/owl#Thing');
-  Node owl_work_type = NodeFactory.createURI('http://www.w3.org/2002/07/owl#Work');
   Node dc_service_type = NodeFactory.createURI('http://purl.org/dc/dcmitype/Service');
   Node dc_collection_type = NodeFactory.createURI('http://purl.org/dc/dcmitype/Collection');
   Node dc_text_type = NodeFactory.createURI('http://purl.org/dc/dcmitype/Text')
@@ -84,13 +85,17 @@ try {
 
   Node foaf_homepage_pred = NodeFactory.createURI('http://xmlns.com/foaf/0.1/homepage');
 
-  Node bibframe_provider_role_pred = NodeFactory.createURI('http://bibframe.org/vocab-list/#providerRole');
+  Node bibframe_electronicLocator_pred = NodeFactory.createURI('http://id.loc.gov/ontologies/bibframe/electronicLocator')
+  Node bibframe_precededBy_pred = NodeFactory.createURI('http://id.loc.gov/ontologies/bibframe/precededBy')
+  Node bibframe_role_pred = NodeFactory.createURI('http://id.loc.gov/ontologies/bibframe/role');
+  Node bibframe_status_pred = NodeFactory.createURI('http://id.loc.gov/ontologies/bibframe/status');
+  Node bibframe_succeededBy_pred = NodeFactory.createURI('http://id.loc.gov/ontologies/bibframe/succeededBy');
 
   Node service_provides_pred = NodeFactory.createURI('http://dini-ag-kim.github.io/service-ontology/service.html#provides')
-  Node dc_publisher_pred = NodeFactory.createURI('http://purl.org/dc/terms/publisher');
   Node dc_format_pred = NodeFactory.createURI('http://purl.org/dc/terms/format');
-  Node dc_medium_pred = NodeFactory.createURI('http://purl.org/dc/terms/medium')
-  Node bibo_status_pred = NodeFactory.createURI('http://purl.org/ontology/bibo/status');
+  Node dc_identifier_pred = NodeFactory.createURI('http://purl.org/dc/terms/identifier')
+  Node dc_publisher_pred = NodeFactory.createURI('http://purl.org/dc/terms/publisher');
+  Node dc_type_pred = NodeFactory.createURI('http://purl.org/dc/terms/type');
 
   Node datacite_issn_pred = NodeFactory.createURI('http://purl.org/spar/datacite/issn')
   Node datacite_eissn_pred = NodeFactory.createURI('http://purl.org/spar/datacite/eissn')
@@ -112,17 +117,13 @@ try {
   Node gokb_coverageEmbargo_pred = NodeFactory.createURI('http://gokb.org/property/#coverageEmbargo')
   Node gokb_belongsToPkg_pred = NodeFactory.createURI('http://gokb.org/property/#belongsToPkg')
 
-  Node bibo_precededBy_pred = NodeFactory.createURI('http://bibframe.org/vocab-list/#precededBy') 
-  Node bibo_succeeded_pred = NodeFactory.createURI('http://bibframe.org/vocab-list/#succeeded') 
-
-  Node mods_identifier_pred = NodeFactory.createURI('http://www.loc.gov/standards/mods/modsrdf/v1/#identifier')
-  Node mods_locationUrl_pred = NodeFactory.createURI('http://www.loc.gov/standards/mods/modsrdf/v1/#locationUrl')
   Node stac_authenticationMethod_pred = NodeFactory.createURI('http://securitytoolbox.appspot.com/stac#AuthenticationMethod');
-  Node service_providedby_pred = NodeFactory.createURI('http://dini-ag-kim.github.io/service-ontology/service.html#providedby');
+  Node schema_provider_pred = NodeFactory.createURI('http://schema.org/provider');
+  Node schema_isAccessibleForFree_pred = NodeFactory.createURI('http://schema.org/isAccessibleForFree');
 
-  
+//Orgs
   println("Connect to ${config.oai_server}gokb/oai/orgs");
-  
+
   OaiClient oaiclient_orgs = new OaiClient(host:config.oai_server+'gokb/oai/orgs');
 
 
@@ -132,23 +133,23 @@ try {
       println("Org... ${record.header.identifier}");
       println("       ${record.metadata.gokb.org.@id}");
       println("       ${record.metadata.gokb.org.name.text()}");
-    
+
       Node orgUri = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.org.@id);
 
       // We need to clear down any old triples for this resource URI.
-      org.apache.jena.graph.Triple delete_pattern = 
-                new org.apache.jena.graph.Triple(origUri, Node.ANY, Node.ANY)
+      org.apache.jena.graph.Triple delete_pattern =
+                new org.apache.jena.graph.Triple(orgUri, Node.ANY, Node.ANY)
       graph.delete(delete_pattern);
-    
+
       addToGraph(orgUri, type_pred, foaf_org_type, true);
       addToGraph(orgUri, type_pred, foaf_agent_type, true);
-      addToGraph(orgUri, type_pred, schema_org_organisation_type, true);
-      addToGraph(orgUri, type_pred, bibframe_organisation_type, true);
-      addToGraph(orgUri, type_pred, owl_organisation_type, true);
+      addToGraph(orgUri, type_pred, schema_org_organization_type, true);
+      addToGraph(orgUri, type_pred, bibframe_organization_type, true);
+      addToGraph(orgUri, type_pred, dbpedia_organisation_type, true);
       addToGraph(orgUri, type_pred, owl_thing_type, true);
       addToGraph(orgUri, skos_pref_label_pred, record.metadata.gokb.org.name.text(),false);
       addUriToGraph(orgUri, foaf_homepage_pred, record.metadata.gokb.org.homepage?.text(),false);
-    
+
       record.metadata.gokb.org.identifiers.identifier.each {
         if ( it.@datatype == 'uri' ) {
           addUriToGraph(orgUri, owl_same_as_pred,it.text(),false);
@@ -158,7 +159,7 @@ try {
             addUriToGraph(orgUri, owl_same_as_pred,it.text(),false);
           }
           else {
-            addToGraph(orgUri, owl_same_as_pred,it.text(),false);
+            addToGraph(orgUri, dc_identifier_pred,it.text(),false);
           }
         }
       }
@@ -168,7 +169,7 @@ try {
       }
 
       record.metadata.gokb.org.roles.role.each {
-        addToGraph(orgUri, bibframe_provider_role_pred, it.text(),false);
+        addToGraph(orgUri, bibframe_role_pred, it.text(),false);
       }
 
       addToGraph(orgUri,gokb_mission_pred, record.metadata.gokb.org.mission.text(),false);
@@ -178,6 +179,7 @@ try {
     }
   }
 
+//Titles
   println("Connect to ${config.oai_server}gokb/oai/titles");
 
   OaiClient oaiclient_titles = new OaiClient(host:config.oai_server+'gokb/oai/titles');
@@ -185,14 +187,15 @@ try {
     try{
       println("Process title with id:: ${record.metadata.gokb.title.@id}");
 
+//Create URI for the selected title resource
       Node titleUri = NodeFactory.createURI("${config.base_resource_url}/data/titles/" +record.metadata.gokb.title.@id);
 
-      org.apache.jena.graph.Triple delete_pattern = 
+      org.apache.jena.graph.Triple delete_pattern =
                 new org.apache.jena.graph.Triple(titleUri, Node.ANY, Node.ANY)
       graph.delete(delete_pattern);
-    
-      addToGraph(titleUri, type_pred, owl_work_type, true);
-      addToGraph(titleUri, dc_format_pred, record.metadata.gokb.title.medium.text(),false);
+
+      addToGraph(titleUri, type_pred, bibframe_work_type, true);
+      addToGraph(titleUri, dc_type_pred, record.metadata.gokb.title.medium.text(),false);
 
       addToGraph(titleUri, skos_pref_label_pred,record.metadata.gokb.title.name.text(), false);
       if ( record.metadata.gokb.title.publisher.@id?.text()?.trim() ) {
@@ -200,30 +203,28 @@ try {
         addToGraph(titleUri, dc_publisher_pred, publisher, true);
       }
 
+//Make sure the value is a URL (begins with http). Don't want text values
       record.metadata.gokb.title.identifiers.identifier.each {
-       addToGraph(titleUri, owl_same_as_pred, it.@value.text(), false);
-      }
+        if ( it.text().toLowerCase().startsWith('http') ) {
+            addUriToGraph(titleUri, owl_same_as_pred,it.text(),false);
+          }
+        }
 
       record.metadata.gokb.title.variantNames.variantName.each {
        addToGraph(titleUri, skos_alt_label_pred, it.@value.text(),false);
       }
 
       record.metadata.gokb.title.identifiers.identifier.each {
-        if(it.@namespace == 'issn')
-           addUriToGraph(titleUri, datacite_issn_pred, 'issn:'+it.@value.text(), false);   
-        else if (it.@namespace == 'eissn')
-           addUriToGraph(titleUri, datacite_eissn_pred, 'eissn:'+it.@value.text(), false); 
-        else {
-          if ( it.@datatype == 'uri' ) {
-            addUriToGraph(titleUri, mods_identifier_pred, it.@namespace+':'+it.@value.text(), false); 
-          }
-          else {
-            addToGraph(titleUri, mods_identifier_pred, it.@value.text(), false); 
+        if(it.@namespace == 'issn'){
+           addUriToGraph(titleUri, datacite_issn_pred, 'issn:'+it.@value.text(), false);
+           } else if (it.@namespace == 'eissn'){
+           addUriToGraph(titleUri, datacite_eissn_pred, 'eissn:'+it.@value.text(), false);
+           } else {
+          addToGraph(titleUri, dc_identifier_pred, it.@value.text(), false);
           }
         }
-      }
-      
-      // addToGraph(titleUri, bibo_status_pred, NodeFactory.createLiteral(record.metadata.gokb.title.OAStatus.text()));
+
+      // addToGraph(titleUri, bibframe_status_pred, NodeFactory.createLiteral(record.metadata.gokb.title.OAStatus.text()));
       addToGraph(titleUri,gokb_pureOpen_pred, record.metadata.gokb.title.pureOA.text(), false);
 
       record.metadata.gokb.title.history.historyEvent.each { he ->
@@ -231,7 +232,7 @@ try {
           internalId_he_from = fromIt.internalId.text()
           if(internalId_he_from){
             Node precTitle = NodeFactory.createURI("${config.base_resource_url}/data/titles/"  + internalId_he_from);
-            addToGraph(titleUri,bibo_precededBy_pred,precTitle, true);
+            addToGraph(titleUri,bibframe_precededBy_pred,precTitle, true);
           }
 
         }
@@ -239,27 +240,28 @@ try {
           internalId_he_to = fromTo.internalId.text()
           if(internalId_he_to){
             Node precTitle = NodeFactory.createURI("${config.base_resource_url}/data/titles/"  + internalId_he_to);
-            addToGraph(titleUri,bibo_succeeded_pred,precTitle, true);
+            addToGraph(titleUri,bibframe_succeededBy_pred,precTitle, true);
           }
         }
-      }    
+      }
     }catch(Exception e){
       println "EXCEPTION WHILE PROCESSING TITLES"
       e.printStackTrace();
     }
   }
 
+//Platforms
   println("Connect to ${config.oai_server}gokb/oai/platforms");
   OaiClient oaiclient_platforms = new OaiClient(host:config.oai_server+'gokb/oai/platforms');
   oaiclient_platforms.getChangesSince(null, 'gokb') { record ->
     try{
       Node platformUri = NodeFactory.createURI("${config.base_resource_url}/data/platforms/" +record.metadata.gokb.platform.@id);
 
-      org.apache.jena.graph.Triple delete_pattern = 
+      org.apache.jena.graph.Triple delete_pattern =
                 new org.apache.jena.graph.Triple(platformUri, Node.ANY, Node.ANY)
       graph.delete(delete_pattern);
 
-      addToGraph(platformUri, skos_pref_label_pred,record.metadata.gokb,latform.name.text(), false);
+      addToGraph(platformUri, skos_pref_label_pred,record.metadata.gokb.platform.name.text(), false);
 
       record.metadata.gokb.platform.variantNames.variantName.each {
         addToGraph(platformUri, skos_alt_label_pred, it.text(),false );
@@ -267,31 +269,32 @@ try {
 
       addToGraph(platformUri, type_pred, dc_service_type, true);
 
-      addToGraph(platformUri, bibo_status_pred, record.metadata.gokb.platform.status.text(), false);
-      
-      addToGraph(platformUri, mods_locationUrl_pred, record.metadata.gokb.platform.primaryUrl.text(), false);
+      addToGraph(platformUri, bibframe_status_pred, record.metadata.gokb.platform.status.text(), false);
+
+      addUriToGraph(platformUri, bibframe_electronicLocator_pred, record.metadata.gokb.platform.primaryUrl.text(), false);
 
       addToGraph(platformUri, stac_authenticationMethod_pred, record.metadata.gokb.platform.authentication.text(), false);
 
       record.metadata.gokb.platform.identifiers.identifier.each {
-        addToGraph(platformUri, owl_same_as_pred, it.text(), false);
+        addUriToGraph(platformUri, owl_same_as_pred, it.text(), false);
       }
       record.metadata.gokb.platform.variantNames.variantName.each {
         addToGraph(platformUri, skos_alt_label_pred, it.text(), false);
-      }      
+      }
     }catch(Exception e){
       println "EXCEPTION WHILE PROCESSING PLATFORMS"
       e.printStackTrace();
     }
   }
 
+//Packages
   println("Connect to ${config.oai_server}gokb/oai/packages");
  OaiClient oaiclient_packages = new OaiClient(host:config.oai_server+'gokb/oai/packages');
   oaiclient_packages.getChangesSince(null, 'gokb') { record ->
     try{
       Node packageUri = NodeFactory.createURI("${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id);
 
-      org.apache.jena.graph.Triple delete_pattern = 
+      org.apache.jena.graph.Triple delete_pattern =
                 new org.apache.jena.graph.Triple(packageUri, Node.ANY, Node.ANY)
       graph.delete(delete_pattern);
 
@@ -301,12 +304,16 @@ try {
       addToGraph(packageUri, type_pred, dc_collection_type, true);
 
       addToGraph(packageUri, dc_type_type, record.metadata.gokb.package.scope.text(), false);
-      addToGraph(packageUri, schema_paymenttype_type, record.metadata.gokb.package.paymentType.text(), false);
+      if (record.metadata.gokb.package.paymentType.text() == "Free"){
+      addToGraph(packageUri, schema_isAccessibleForFree_pred, "true", false);
+      } else {
+      addToGraph(packageUri, schema_isAccessibleForFree_pred, "false", false);
+      }
       record.metadata.gokb.package.variantNames.variantName.each {
         addToGraph(packageUri, skos_alt_label_pred, it.text(), false);
       }
 
-      addToGraph(packageUri, service_providedby_pred,record.metadata.gokb.package.nominalProvider.text(), false);
+      addToGraph(packageUri, schema_provider_pred,record.metadata.gokb.package.nominalProvider.text(), false);
 
       record.metadata.gokb.package.TIPPs.TIPP.each { tipp ->
         try{
@@ -315,22 +322,22 @@ try {
           addToGraph(tippUri, skos_pref_label_pred, prefLabel, false);
           addToGraph(tippUri, type_pred, gokb_tipp_type, true);
           if(tipp.title.@id.text().trim()){
-            addToGraph(tippUri, gokb_hasTitle_pred, "${config.base_resource_url}/data/titles/" +tipp.title.@id, false)
+            addUriToGraph(tippUri, gokb_hasTitle_pred, "${config.base_resource_url}/data/titles/" +tipp.title.@id, false)
           }
           if(record.metadata.gokb.package.@id.text().trim()){
-            addToGraph(tippUri, gokb_hasPackage_pred, "${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id, false)
+            addUriToGraph(tippUri, gokb_hasPackage_pred, "${config.base_resource_url}/data/packages/" +record.metadata.gokb.package.@id, false)
           }
           if(record.metadata.gokb.platform.@id.text().trim()){
-            addToGraph(tippUri, gokb_hasPlatform_pred, "${config.base_resource_url}/data/platform/" +record.metadata.gokb.platform.@id, false)
+            addUriToGraph(tippUri, gokb_hasPlatform_pred, "${config.base_resource_url}/data/platform/" +record.metadata.gokb.platform.@id, false)
           }
           addToGraph(tippUri,bibo_status_pred, tipp.status.text(), false)
 
           addToGraph(tippUri, gokb_accessStart_pred, tipp.access.@start.text(), false)
           addToGraph(tippUri, gokb_accessEnd_pred, tipp.access.@end.text(), false)
 
-          addToGraph(tippUri, mods_locationUrl_pred, tipp.url.text(), false)
+          addUriToGraph(tippUri, bibframe_electronicLocator_pred, tipp.url.text(), false)
 
-          addToGraph(tippUri, dc_medium_pred, tipp.medium.text(), false)
+          addToGraph(tippUri, dc_format_pred, tipp.medium.text(), false)
 
           addToGraph(tippUri, gokb_coverageStartDate_pred, tipp.coverage.@startDate.text(), false)
           addToGraph(tippUri, gokb_coverageEndDate_pred, tipp.coverage.@endDate.text(), false)
@@ -340,14 +347,18 @@ try {
           addToGraph(tippUri, gokb_coverageEndVolume_pred, tipp.coverage.@endVolume.text(), false)
           addToGraph(tippUri, gokb_coverageEmbargo_pred, tipp.coverage.@embargo.text(), false)
 
-          addToGraph(tippUri, mods_identifier_pred, tipp.@id.text(), false)
+          if (tipp.@id.text().toLowerCase().startsWith('http')) {
+          addUriToGraph(tippUri, dc_identifier_pred, tipp.@id.text(), false);
+          } else {
+          addToGraph(tippUri, dc_identifier_pred, tipp.@id.text(), false);
+          }
 
           addToGraph(tippUri, gokb_belongsToPkg_pred, packageUri, true )
         }catch(Exception e){
           println "EXCEPTION WHILE PROCESSING TIPPS"
           e.printStackTrace();
         }
-      }    
+      }
     }catch(Exception e){
       println "EXCEPTION WHILE PROCESSING PACKAGES"
       e.printStackTrace();
@@ -388,4 +399,3 @@ def addUriToGraph(subj, pred, uri, isNode){
     }
   }
 }
-

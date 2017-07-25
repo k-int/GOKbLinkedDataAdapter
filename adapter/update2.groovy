@@ -137,9 +137,11 @@ try {
       Node orgUri = NodeFactory.createURI("${config.base_resource_url}/data/orgs/" +record.metadata.gokb.org.@id);
 
       // We need to clear down any old triples for this resource URI.
-      org.apache.jena.graph.Triple delete_pattern =
-                new org.apache.jena.graph.Triple(orgUri, Node.ANY, Node.ANY)
-      graph.delete(delete_pattern);
+      org.apache.jena.graph.Triple delete_pattern = new org.apache.jena.graph.Triple(orgUri, Node.ANY, Node.ANY)
+      graph.find(delete_pattern).each { found_triple ->
+        graph.delete(triple);
+      }
+      // graph.delete(delete_pattern);
 
       addToGraph(orgUri, type_pred, foaf_org_type, true);
       addToGraph(orgUri, type_pred, foaf_agent_type, true);
@@ -192,7 +194,10 @@ try {
 
       org.apache.jena.graph.Triple delete_pattern =
                 new org.apache.jena.graph.Triple(titleUri, Node.ANY, Node.ANY)
-      graph.delete(delete_pattern);
+      graph.find(delete_pattern).each { found_triple ->
+        graph.delete(triple);
+      }
+      // graph.delete(delete_pattern);
 
       addToGraph(titleUri, type_pred, bibframe_work_type, true);
       addToGraph(titleUri, dc_type_pred, record.metadata.gokb.title.medium.text(),false);
@@ -259,7 +264,10 @@ try {
 
       org.apache.jena.graph.Triple delete_pattern =
                 new org.apache.jena.graph.Triple(platformUri, Node.ANY, Node.ANY)
-      graph.delete(delete_pattern);
+      graph.find(delete_pattern).each { found_triple ->
+        graph.delete(triple);
+      }
+      // graph.delete(delete_pattern);
 
       addToGraph(platformUri, skos_pref_label_pred,record.metadata.gokb.platform.name.text(), false);
 
@@ -296,7 +304,10 @@ try {
 
       org.apache.jena.graph.Triple delete_pattern =
                 new org.apache.jena.graph.Triple(packageUri, Node.ANY, Node.ANY)
-      graph.delete(delete_pattern);
+      graph.find(delete_pattern).each { found_triple ->
+        graph.delete(triple);
+      }
+      // graph.delete(delete_pattern);
 
       println "Create package with URI: ${packageUri}"
       addToGraph(packageUri, skos_pref_label_pred, record.metadata.gokb.package.name.text(), false);
